@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets PrintSupport)
+find_package(Qt6 REQUIRED COMPONENTS Widgets PrintSupport Sql)
 
 qt_add_executable(SmartWeather
     gbureaux.cpp
@@ -22,10 +22,13 @@ qt_add_executable(SmartWeather
     technicienne.h
     weatherwisetest.cpp
     weatherwisetest.h
+    connection.cpp
+    connection.h
 )
 
 target_link_libraries(SmartWeather
     PRIVATE
     Qt6::Widgets
     Qt6::PrintSupport
+    Qt6::Sql
 )
