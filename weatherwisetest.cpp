@@ -1,4 +1,9 @@
 #include "weatherwisetest.h"
+#include "equipement.h"
+#include <QSqlQueryModel>
+#include <QSqlRecord>
+#include <QSqlError>
+#include <QDebug>
 #include <QAbstractItemModel>
 #include <QComboBox>
 #include <QDateTime>
@@ -337,7 +342,6 @@ WeatherWiseTest::WeatherWiseTest(QWidget *parent)
     setWindowTitle("Smart Weather Management - Gestion des équipements");
     setStyleSheet(styleSheet());
     detectCountry();
-    loadSampleData();
 
     QWidget *central = new QWidget;
     QHBoxLayout *root = new QHBoxLayout(central);
@@ -378,6 +382,41 @@ WeatherWiseTest::WeatherWiseTest(QWidget *parent)
     rv->addWidget(content, 1);
     root->addWidget(right, 1);
     setCentralWidget(central);
+
+    // Charger les équipements réels depuis Oracle via EquipementDAO.
+    m_equipements.clear();
+    EquipementDAO dao;
+    QSqlQueryModel *model = dao.afficher();
+
+    if (model && !model->lastError().isValid()) {
+        for (int row = 0; row < model->rowCount(); ++row) {
+            Equipement e;
+            e.id = model->data(model->index(row, 0)).toString();
+            e.nom = model->data(model->index(row, 1)).toString();
+            e.localisation = model->data(model->index(row, 2)).toString();
+            e.statut = model->data(model->index(row, 3)).toString();
+
+            const QVariant dateValue = model->data(model->index(row, 4));
+            e.dateInstallation = dateValue.toDate();
+            if (!e.dateInstallation.isValid()) {
+                const QString dateText = dateValue.toString();
+                e.dateInstallation = QDate::fromString(dateText, "yyyy-MM-dd");
+                if (!e.dateInstallation.isValid())
+                    e.dateInstallation = QDate::fromString(dateText, "dd/MM/yyyy");
+                if (!e.dateInstallation.isValid())
+                    e.dateInstallation = QDate::fromString(dateText.left(10), "yyyy-MM-dd");
+            }
+
+            e.type = model->data(model->index(row, 5)).toString();
+            m_equipements.append(e);
+        }
+    } else if (model) {
+        qDebug() << "Erreur chargement équipements Oracle:" << model->lastError().text();
+        QMessageBox::warning(this, "Erreur Oracle",
+                             QString::fromUtf8("Impossible de charger les équipements depuis Oracle :\n")
+                                 + model->lastError().text());
+    }
+    delete model;
 
     onClear();
     refreshTable();
@@ -997,7 +1036,6 @@ void WeatherWiseTest::onAdd()
     }
 
     QString id = m_id->text().trimmed().toUpper();
-
     if (id.isEmpty()) {
         id = nextId();
     }
@@ -1005,19 +1043,30 @@ void WeatherWiseTest::onAdd()
     for (int i = 0; i < m_equipements.size(); ++i) {
         if (m_equipements.at(i).id == id) {
             QMessageBox::warning(
-                this,
-                "ID existant",
-                QString::fromUtf8(
-                    "Un équipement avec l'ID %1 existe déjà.").arg(id));
+                this, "ID existant",
+                QString::fromUtf8("Un équipement avec l'ID %1 existe déjà.").arg(id));
             return;
         }
     }
 
+    // Insérer dans Oracle AVANT de modifier la liste affichée.
+    EquipementDAO dao;
+    if (!dao.ajouter(id, e.nom, e.localisation, e.statut,
+                     e.dateInstallation, e.type)) {
+        QMessageBox::critical(
+            this, "Erreur d'insertion Oracle",
+            QString::fromUtf8("L'équipement n'a pas été enregistré dans Oracle.\n"
+                              "Vérifiez Application Output pour le détail de l'erreur."));
+        return;
+    }
+
     e.id = id;
     m_equipements.append(e);
-
     onClear();
     refreshTable();
+
+    QMessageBox::information(this, "Succès",
+                             QString::fromUtf8("Équipement enregistré dans Oracle."));
 }
 
 /* ------------------------------------------------------------------ */
@@ -1028,30 +1077,44 @@ void WeatherWiseTest::onEdit()
 {
     if (m_editId.isEmpty()) {
         QMessageBox::information(
-            this,
-            "Modifier",
-            QString::fromUtf8(
-                "Sélectionnez d'abord une ligne dans la liste."));
+            this, "Modifier",
+            QString::fromUtf8("Sélectionnez d'abord une ligne dans la liste."));
         return;
     }
 
     Equipement ne;
-
     if (!readForm(ne)) {
         return;
     }
-
     ne.id = m_editId;
 
+    // Mettre à jour Oracle avant de mettre à jour l'interface.
+    EquipementDAO dao;
+    if (!dao.modifier(ne.id, ne.nom, ne.localisation, ne.statut,
+                      ne.dateInstallation, ne.type)) {
+        QMessageBox::critical(
+            this, "Erreur de modification Oracle",
+            QString::fromUtf8("La modification n'a pas été confirmée dans Oracle.\n"
+                              "Vérifiez que l'ID existe et consultez Application Output."));
+        return;
+    }
+
+    bool found = false;
     for (int i = 0; i < m_equipements.size(); ++i) {
         if (m_equipements.at(i).id == m_editId) {
             m_equipements[i] = ne;
+            found = true;
             break;
         }
+    }
+    if (!found) {
+        m_equipements.append(ne);
     }
 
     onClear();
     refreshTable();
+    QMessageBox::information(this, "Succès",
+                             QString::fromUtf8("Équipement modifié dans Oracle."));
 }
 
 /* ------------------------------------------------------------------ */
@@ -1078,6 +1141,16 @@ void WeatherWiseTest::onDelete()
         return;
     }
 
+    // Supprimer dans Oracle avant de retirer la ligne de l'interface.
+    EquipementDAO dao;
+    if (!dao.supprimer(m_editId)) {
+        QMessageBox::critical(
+            this, "Erreur de suppression Oracle",
+            QString::fromUtf8("La suppression n'a pas été confirmée dans Oracle.\n"
+                              "Vérifiez que l'ID existe et consultez Application Output."));
+        return;
+    }
+
     for (int i = m_equipements.size() - 1; i >= 0; --i) {
         if (m_equipements.at(i).id == m_editId) {
             m_equipements.remove(i);
@@ -1086,6 +1159,8 @@ void WeatherWiseTest::onDelete()
 
     onClear();
     refreshTable();
+    QMessageBox::information(this, "Succès",
+                             QString::fromUtf8("Équipement supprimé d'Oracle."));
 }
 
 /* ------------------------------------------------------------------ */

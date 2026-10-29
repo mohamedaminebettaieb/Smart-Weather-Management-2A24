@@ -9,7 +9,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets PrintSupport)
+find_package(Qt6 REQUIRED COMPONENTS Widgets PrintSupport Sql)
 
 qt_add_executable(SmartWeatherManagement
     main.cpp
@@ -31,10 +31,17 @@ qt_add_executable(SmartWeatherManagement
     gutilisateur.cpp
     gutilisateur.h
     gutilisateur.ui
+
+    connection.cpp
+    connection.h
+
+    equipement.h
+    equipement.cpp
 )
 
 target_link_libraries(SmartWeatherManagement
     PRIVATE
     Qt6::Widgets
     Qt6::PrintSupport
+    Qt6::Sql
 )
