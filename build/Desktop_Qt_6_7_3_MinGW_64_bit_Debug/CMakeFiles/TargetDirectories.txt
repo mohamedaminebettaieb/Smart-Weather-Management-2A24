@@ -1,5 +1,0 @@
-C:/Users/asus/Desktop/projet2A24/appfinaleSWM/build/Desktop_Qt_6_7_3_MinGW_64_bit_Debug/CMakeFiles/SmartWeatherManagement.dir
-C:/Users/asus/Desktop/projet2A24/appfinaleSWM/build/Desktop_Qt_6_7_3_MinGW_64_bit_Debug/CMakeFiles/edit_cache.dir
-C:/Users/asus/Desktop/projet2A24/appfinaleSWM/build/Desktop_Qt_6_7_3_MinGW_64_bit_Debug/CMakeFiles/rebuild_cache.dir
-C:/Users/asus/Desktop/projet2A24/appfinaleSWM/build/Desktop_Qt_6_7_3_MinGW_64_bit_Debug/CMakeFiles/SmartWeatherManagement_autogen_timestamp_deps.dir
-C:/Users/asus/Desktop/projet2A24/appfinaleSWM/build/Desktop_Qt_6_7_3_MinGW_64_bit_Debug/CMakeFiles/SmartWeatherManagement_autogen.dir
