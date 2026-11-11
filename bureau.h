@@ -6,24 +6,29 @@
 #include <QSqlQuery>
 #include <QSqlQueryModel>
 
+// Classe purement C++ (couche Modèle) : toutes les requêtes SQL
+// sur la table BUREAUX sont ici, aucune derrière un bouton.
 class bureau
 {
 public:
     int id;
     QString localisation;
     QDate dateOuverture;
-    QString statut;
+    QString statut;        // "Actif" ou "Inactif"
     QString utilisateur;   // "Administrateur" ou "Technicien"
-    QString erreurSql;   // dernier message d'erreur (validation ou Oracle)
+    QString erreurSql;     // dernier message d'erreur (validation ou Oracle)
+
     bureau() : id(0), statut("Actif") {}
-    bureau(int, QString, QDate, QString, QString = QString());
+    bureau(int, QString, QDate, QString, QString);
 
-    bool valider(QString *message = 0) const;
+    // Contrôle de saisie (obligatoire dans le code C++)
+    bool valider(QString *message = nullptr) const;
 
-    bool ajouter();
-    QSqlQueryModel *afficher(QObject *parent = 0);
-    bool modifier();
-    bool supprimer(int);
+    // CRUD
+    bool ajouter();                                    // Create
+    QSqlQueryModel *afficher(QObject *parent = nullptr); // Read
+    bool modifier();                                   // Update
+    bool supprimer(int);                               // Delete
 };
 
 #endif // BUREAU_H
