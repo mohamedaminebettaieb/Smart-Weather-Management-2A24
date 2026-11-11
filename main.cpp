@@ -1,4 +1,5 @@
 #include <QApplication>
+#include <QMessageBox>
 #include <QMainWindow>
 #include <QPushButton>
 #include <QList>
@@ -9,9 +10,10 @@
 #include "gbureaux.h"
 #include "weatherwisetest.h"
 #include "gutilisateur.h"
+#include "connection.h"
 
-    // Switch from one module window to another
-    static void basculerFenetre(QMainWindow *from, QMainWindow *to)
+// Switch from one module window to another
+static void basculerFenetre(QMainWindow *from, QMainWindow *to)
 {
     if (from == nullptr || to == nullptr || from == to)
         return;
@@ -64,6 +66,13 @@ int main(int argc, char *argv[])
 
     QApplication::setStyle("Fusion");
     QApplication::setApplicationName("Smart Weather Management");
+    Connection& connection = Connection::createInstance();
+    if(!connection.createConnection())
+    {
+        //QMessageBox::critical(nullptr, "Erreur de connexion", "Impossible de se connecter à la base de données.\n", "Vérifiez la source ODBC, le nom d'utilisateur et le mot de passe.", QMessageBox::Ok);
+        return -1;
+    }
+    QMessageBox::information(nullptr, "Information", "Connexion à la base de données réussie.", QMessageBox::Ok);
 
     // Create the five module windows
     Technicienne fenetreTechniciens;
@@ -158,7 +167,13 @@ int main(int argc, char *argv[])
                         "Équipements");
 
     // Start with the Techniciens module
-    fenetreTechniciens.show();
+    fenetreUtilisateurs.show();
+
+    if (!Connection::createInstance().createConnection()) {
+        QMessageBox::critical(nullptr, "Erreur", "Connexion à la base impossible.");
+        return 1;
+    }
+    GBureaux w;
 
     return app.exec();
 }

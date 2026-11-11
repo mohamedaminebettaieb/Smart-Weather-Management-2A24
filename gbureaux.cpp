@@ -1,15 +1,20 @@
 #include "gbureaux.h"
+#include "bureau.h"
 
 #include <QAbstractItemModel>
 #include <QButtonGroup>
 #include <QComboBox>
 #include <QDateTime>
 #include <QDateEdit>
+#include <QDebug>
+#include <QSqlError>
+#include <QSqlQuery>
 #include <QFileDialog>
 #include <QFrame>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
+#include <QIntValidator>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
@@ -191,16 +196,16 @@ static void addField(QGridLayout *g, int row, int col, const QString &label, QWi
 /*  Constructeur                                                      */
 /* ------------------------------------------------------------------ */
 GBureaux::GBureaux(QWidget *parent)
-    : QMainWindow(parent), m_sortMode(-1),
+    : QMainWindow(parent), m_editId(0), m_sortMode(-1),
     m_table(0), m_search(0), m_sort(0),
     m_donut(0), m_actifsLabel(0), m_inactifsLabel(0),
     m_map(0), m_dateLabel(0), m_timeLabel(0),
-    m_id(0), m_loc(0), m_date(0), m_statut(0)
+    m_id(0), m_loc(0), m_date(0), m_statut(0), m_user(0)
 {
     setWindowTitle("Smart Weather Management - Gestion des bureaux");
     setStyleSheet(styleSheet());
     detectCountry();
-    loadSampleData();
+    loadFromOracle();       // la liste reprend les bureaux déjà enregistrés dans Oracle
 
     QWidget *central = new QWidget;
     QHBoxLayout *root = new QHBoxLayout(central);
@@ -251,6 +256,33 @@ GBureaux::GBureaux(QWidget *parent)
 }
 
 /* ------------------------------------------------------------------ */
+/*  Chargement des bureaux depuis Oracle                              */
+/* ------------------------------------------------------------------ */
+void GBureaux::loadFromOracle()
+{
+    m_bureaux.clear();
+
+    QSqlQuery q;
+    if (!q.exec("select ID_BUREAU, LOCALISATION_BUREAU, DATE_OUVERTURE, STATUT_BUREAU, UTILISATEUR_BUREAU "
+                "from bureaux order by ID_BUREAU")) {
+        qDebug() << "GBureaux::loadFromOracle :" << q.lastError().text();
+        return;
+    }
+
+    while (q.next()) {
+        Bureau b;
+        b.id = q.value(0).toInt();
+        b.localisation = q.value(1).toString();
+        b.dateOuverture = q.value(2).toDate();
+        if (!b.dateOuverture.isValid())    // selon le pilote, la date peut arriver en texte
+            b.dateOuverture = QDate::fromString(q.value(2).toString().left(10), "yyyy-MM-dd");
+        b.actif = (q.value(3).toString() == "Actif");
+        b.utilisateur = q.value(4).toString();
+        m_bureaux.append(b);
+    }
+}
+
+/* ------------------------------------------------------------------ */
 /*  Pays de l'utilisateur                                             */
 /* ------------------------------------------------------------------ */
 void GBureaux::detectCountry()
@@ -276,38 +308,17 @@ void GBureaux::detectCountry()
 /* ------------------------------------------------------------------ */
 /*  Données                                                           */
 /* ------------------------------------------------------------------ */
-void GBureaux::loadSampleData()
-{
-    m_bureaux.clear();
-    struct Row { int y, m, d; bool actif; };
-    static const Row rows[] = {
-        {2018,  3, 12, true},
-        {2019,  7, 25, true},
-        {2020, 11, 10, true},
-        {2021,  5,  3, false},
-        {2022,  9, 17, true},
-        {2023,  2, 28, true},
-        {2023,  6, 14, false},
-        {2023, 12, 22, true},
-        {2024,  4,  8, true},
-        {2024, 10, 16, true}
-    };
-    for (int i = 0; i < 10; ++i) {
-        Bureau b;
-        b.id = QString("B%1").arg(i + 1, 3, 10, QChar('0'));
-        b.localisation = m_geo.villes.at(i % m_geo.villes.size());   // villes du pays
-        b.dateOuverture = QDate(rows[i].y, rows[i].m, rows[i].d);
-        b.actif = rows[i].actif;
-        m_bureaux.append(b);
-    }
-}
-
-QString GBureaux::nextId() const
+int GBureaux::nextId() const
 {
     int mx = 0;
     for (int i = 0; i < m_bureaux.size(); ++i)
-        mx = qMax(mx, m_bureaux.at(i).id.mid(1).toInt());
-    return QString("B%1").arg(mx + 1, 3, 10, QChar('0'));
+        mx = qMax(mx, m_bureaux.at(i).id);
+
+    // tient aussi compte des bureaux déjà enregistrés dans Oracle
+    QSqlQuery q;
+    if (q.exec("select nvl(max(ID_BUREAU), 0) from bureaux") && q.next())
+        mx = qMax(mx, q.value(0).toInt());
+    return mx + 1;
 }
 
 /* ------------------------------------------------------------------ */
@@ -414,7 +425,8 @@ QWidget *GBureaux::buildFormCard()
     v->addWidget(makeCardTitle(QString::fromUtf8("🏢  Informations du bureau")));
 
     m_id = new QLineEdit;
-    m_id->setPlaceholderText(QString::fromUtf8("Généré automatiquement si vide (ex. B011)"));
+    m_id->setPlaceholderText(QString::fromUtf8("Généré automatiquement si vide (ex. 11)"));
+    m_id->setValidator(new QIntValidator(1, 999999999, m_id));   // entiers positifs uniquement
     m_loc = new QComboBox;
     m_loc->addItems(m_geo.villes);
     m_date = new QDateEdit(QDate::currentDate());
@@ -423,6 +435,9 @@ QWidget *GBureaux::buildFormCard()
     m_statut = new QComboBox;
     m_statut->addItem("Actif");
     m_statut->addItem("Inactif");
+    m_user = new QComboBox;
+    m_user->addItem(QString::fromUtf8("👤  Administrateur"), "Administrateur");
+    m_user->addItem(QString::fromUtf8("🛠  Technicien"), "Technicien");
 
     QGridLayout *g = new QGridLayout;
     g->setHorizontalSpacing(14);
@@ -433,6 +448,7 @@ QWidget *GBureaux::buildFormCard()
     addField(g, 0, 1, "Localisation :", m_loc);
     addField(g, 1, 0, "Date d'ouverture :", m_date);
     addField(g, 1, 1, "Statut :", m_statut);
+    addField(g, 2, 0, "Utilisateur :", m_user);
     v->addLayout(g);
     return card;
 }
@@ -509,14 +525,14 @@ QWidget *GBureaux::buildTableCard()
     top->addWidget(hint);
     v->addLayout(top);
 
-    m_table = new QTableWidget(0, 5);
+    m_table = new QTableWidget(0, 6);
     QStringList headers;
-    headers << "ID Bureau" << "Localisation" << "Date d'ouverture" << "Statut" << "Actions";
+    headers << "id" << "Localisation" << "Date d'ouverture" << "Statut" << "Utilisateur" << "Actions";
     m_table->setHorizontalHeaderLabels(headers);
     m_table->verticalHeader()->setDefaultSectionSize(40);
     m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    m_table->horizontalHeader()->setSectionResizeMode(4, QHeaderView::Fixed);
-    m_table->setColumnWidth(4, 110);
+    m_table->horizontalHeader()->setSectionResizeMode(5, QHeaderView::Fixed);
+    m_table->setColumnWidth(5, 110);
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_table->setSelectionMode(QAbstractItemView::SingleSelection);
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -538,7 +554,7 @@ void GBureaux::refreshTable()
         const QString statut = b.actif ? "Actif" : "Inactif";
         // "actif" ne correspond qu'aux actifs ("Inactif" ne commence pas par "actif")
         if (q.isEmpty()
-            || b.id.contains(q, Qt::CaseInsensitive)
+            || QString::number(b.id).contains(q)
             || statut.startsWith(q, Qt::CaseInsensitive))
             list.append(b);
     }
@@ -554,14 +570,16 @@ void GBureaux::refreshTable()
     m_table->setRowCount(list.size());
     for (int r = 0; r < list.size(); ++r) {
         const Bureau &b = list.at(r);
-        const QString id = b.id;
-        m_table->setItem(r, 0, new QTableWidgetItem(b.id));
+        const int id = b.id;
+        m_table->setItem(r, 0, new QTableWidgetItem(QString::number(b.id)));
         m_table->setItem(r, 1, new QTableWidgetItem(b.localisation));
         m_table->setItem(r, 2, new QTableWidgetItem(b.dateOuverture.toString("dd/MM/yyyy")));
 
         QTableWidgetItem *st = new QTableWidgetItem(b.actif ? "Actif" : "Inactif");
         st->setForeground(QBrush(QColor(b.actif ? "#16a068" : "#e5474f")));
         m_table->setItem(r, 3, st);
+
+        m_table->setItem(r, 4, new QTableWidgetItem(b.utilisateur));
 
         // Actions : crayon (modifier) et poubelle (supprimer), à droite de chaque bureau
         QWidget *aw = new QWidget;
@@ -590,7 +608,7 @@ void GBureaux::refreshTable()
         connect(bd, &QToolButton::clicked, this, [this, id]() {
             QTimer::singleShot(0, this, [this, id]() { deleteById(id); });
         });
-        m_table->setCellWidget(r, 4, aw);
+        m_table->setCellWidget(r, 5, aw);
     }
 
     updateStats();                       // statistiques toujours à jour
@@ -674,6 +692,7 @@ bool GBureaux::readForm(Bureau &b)
     b.localisation = m_loc->currentText();
     b.dateOuverture = m_date->date();
     b.actif = (m_statut->currentIndex() == 0);
+    b.utilisateur = m_user->currentData().toString();
     return true;
 }
 
@@ -683,25 +702,51 @@ void GBureaux::onAdd()
     if (!readForm(b))
         return;
 
-    QString id = m_id->text().trimmed().toUpper();
-    if (id.isEmpty())
+    // lecture de l'id depuis l'interface (entier positif, généré si vide)
+    int id = 0;
+    const QString idText = m_id->text().trimmed();
+    if (idText.isEmpty()) {
         id = nextId();
+    } else {
+        bool ok = false;
+        id = idText.toInt(&ok);
+        if (!ok || id <= 0) {
+            QMessageBox::warning(this, "ID invalide",
+                                 QString::fromUtf8("L'ID doit être un entier positif."));
+            return;
+        }
+    }
+
     for (int i = 0; i < m_bureaux.size(); ++i) {
-        if (m_bureaux.at(i).id == id) {
+        if (m_bureaux.at(i).id == id) { //calculer le size d'id et le comparer avec nouvel id
             QMessageBox::warning(this, "ID existant",
                                  QString::fromUtf8("Un bureau avec l'ID %1 existe déjà.").arg(id));
             return;
         }
     }
+
+    //inserer dans oracle avant de modifier la liste affichee
+    bureau b1(id, b.localisation, b.dateOuverture, b.actif ? "Actif" : "Inactif", b.utilisateur);
+    if (!b1.ajouter()) {
+        // sans ce message, un échec d'insertion est invisible (le bouton semble "ne rien faire")
+        if (b1.erreurSql.contains("ORA-00001"))
+            QMessageBox::warning(this, "ID existant",
+                                 QString::fromUtf8("Un bureau avec l'ID %1 existe déjà dans Oracle.\n"
+                                                   "Laissez le champ ID vide pour générer un nouvel ID.").arg(id));
+        else
+            QMessageBox::critical(this, "Erreur d'insertion Oracle", b1.erreurSql);
+        return;
+    }
+
     b.id = id;
     m_bureaux.append(b);
     onClear();
-    refreshTable();      // met à jour tableau, statistiques, zones et carte
+    refreshTable();    // met à jour tableau, statistiques, zones et carte
 }
 
 void GBureaux::onEdit()
 {
-    if (m_editId.isEmpty()) {
+    if (m_editId <= 0) {
         QMessageBox::information(this, "Modifier",
                                  QString::fromUtf8("Sélectionnez d'abord une ligne dans la liste."));
         return;
@@ -710,6 +755,15 @@ void GBureaux::onEdit()
     if (!readForm(nb))
         return;
     nb.id = m_editId;
+
+    // mise à jour dans Oracle avant de modifier la liste affichée
+    bureau bo(nb.id, nb.localisation, nb.dateOuverture,
+              nb.actif ? "Actif" : "Inactif", nb.utilisateur);
+    if (!bo.modifier()) {
+        QMessageBox::critical(this, "Erreur de modification Oracle", bo.erreurSql);
+        return;
+    }
+
     for (int i = 0; i < m_bureaux.size(); ++i) {
         if (m_bureaux.at(i).id == m_editId) {
             m_bureaux[i] = nb;
@@ -722,7 +776,7 @@ void GBureaux::onEdit()
 
 void GBureaux::onDelete()
 {
-    if (m_editId.isEmpty()) {
+    if (m_editId <= 0) {
         QMessageBox::information(this, "Supprimer",
                                  QString::fromUtf8("Cliquez d'abord sur une ligne (ou sur ✎) pour choisir le bureau."));
         return;
@@ -730,12 +784,19 @@ void GBureaux::onDelete()
     deleteById(m_editId);
 }
 
-void GBureaux::deleteById(const QString &id)
+void GBureaux::deleteById(int id)
 {
     const QMessageBox::StandardButton rep = QMessageBox::question(
         this, "Confirmation", QString("Supprimer le bureau %1 ?").arg(id));
     if (rep != QMessageBox::Yes)
         return;
+
+    // suppression dans Oracle avant de modifier la liste affichée
+    bureau bo;
+    if (!bo.supprimer(id)) {
+        QMessageBox::critical(this, "Erreur de suppression Oracle", bo.erreurSql);
+        return;
+    }
 
     for (int i = m_bureaux.size() - 1; i >= 0; --i) {
         if (m_bureaux.at(i).id == id)
@@ -747,12 +808,13 @@ void GBureaux::deleteById(const QString &id)
 
 void GBureaux::onClear()
 {
-    m_editId.clear();
+    m_editId = 0;
     m_id->clear();
     m_id->setReadOnly(false);
     m_loc->setCurrentIndex(0);
     m_date->setDate(QDate::currentDate());
     m_statut->setCurrentIndex(0);
+    m_user->setCurrentIndex(0);
     m_table->clearSelection();
 }
 
@@ -774,22 +836,25 @@ void GBureaux::onRowSelected()
         return;
     QTableWidgetItem *first = m_table->item(sel.first()->row(), 0);
     if (first)
-        editById(first->text());
+        editById(first->text().toInt());
 }
 
 // Charge le bureau dans le formulaire ; le bouton "Modifier" enregistre ensuite.
-void GBureaux::editById(const QString &id)
+void GBureaux::editById(int id)
 {
     for (int i = 0; i < m_bureaux.size(); ++i) {
         const Bureau &b = m_bureaux.at(i);
         if (b.id != id)
             continue;
         m_editId = id;
-        m_id->setText(b.id);
+        m_id->setText(QString::number(b.id));
         m_id->setReadOnly(true);               // l'ID ne se modifie pas
         m_loc->setCurrentText(b.localisation);
         m_date->setDate(b.dateOuverture);
         m_statut->setCurrentIndex(b.actif ? 0 : 1);
+        const int ui = m_user->findData(b.utilisateur);
+        if (ui >= 0)
+            m_user->setCurrentIndex(ui);
         m_loc->setFocus();
         return;
     }
@@ -806,12 +871,12 @@ void GBureaux::exportPdf()
         "<h2 style='color:#0f3d91'>Liste des bureaux</h2>"
         "<table border='1' cellspacing='0' cellpadding='6' width='100%'>"
         "<tr style='background:#e8f0fc'><th>ID</th><th>Localisation</th>"
-        "<th>Date d'ouverture</th><th>Statut</th></tr>");
+        "<th>Date d'ouverture</th><th>Statut</th><th>Utilisateur</th></tr>");
     for (int i = 0; i < m_bureaux.size(); ++i) {
         const Bureau &b = m_bureaux.at(i);
-        html += QString("<tr><td>%1</td><td>%2</td><td>%3</td><td>%4</td></tr>")
-                    .arg(b.id, b.localisation,
-                         b.dateOuverture.toString("dd/MM/yyyy"), b.actif ? "Actif" : "Inactif");
+        html += QString("<tr><td>%1</td><td>%2</td><td>%3</td><td>%4</td><td>%5</td></tr>")
+                    .arg(QString::number(b.id), b.localisation,
+                         b.dateOuverture.toString("dd/MM/yyyy"), b.actif ? "Actif" : "Inactif", b.utilisateur);
     }
     html += "</table>";
 
