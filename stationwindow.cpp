@@ -23,7 +23,12 @@
 #include <QTableWidgetItem>
 
 #include <QDate>
+#include <QDateTime>
 #include <QMap>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QVariant>
 #include <algorithm>
 
 
@@ -235,7 +240,7 @@ StationWindow::StationWindow(QWidget *parent)
 
     setupStyle();
 
-    loadDemoData();
+    loadStationsFromDatabase();
 
     refreshTable();
 
@@ -289,9 +294,9 @@ void StationWindow::setupUI()
         new QVBoxLayout(content);
 
     contentLayout->setContentsMargins(
-        20,
         0,
-        20,
+        0,
+        0,
         15
         );
 
@@ -304,14 +309,20 @@ void StationWindow::setupUI()
         );
 
 
+    QWidget *body = new QWidget;
+    QVBoxLayout *bodyLayout = new QVBoxLayout(body);
+    bodyLayout->setContentsMargins(20, 0, 20, 0);
+    bodyLayout->setSpacing(12);
+
+
     // Formulaire
-    contentLayout->addWidget(
+    bodyLayout->addWidget(
         createStationForm()
         );
 
 
     // Barre d'actions
-    contentLayout->addWidget(
+    bodyLayout->addWidget(
         createActionBar()
         );
 
@@ -367,10 +378,12 @@ void StationWindow::setupUI()
         );
 
 
-    contentLayout->addLayout(
+    bodyLayout->addLayout(
         bottomLayout,
         1
         );
+
+    contentLayout->addWidget(body, 1);
 
 
     mainLayout->addWidget(
@@ -1357,10 +1370,7 @@ QGroupBox *StationWindow::createStationList()
 
 QGroupBox *StationWindow::createStatistics()
 {
-    QGroupBox *box =
-        new QGroupBox(
-            "📊   Statistiques des stations"
-            );
+    QGroupBox *box = new QGroupBox;
 
 
     QVBoxLayout *layout =
@@ -1368,11 +1378,14 @@ QGroupBox *StationWindow::createStatistics()
 
     layout->setContentsMargins(
         10,
-        20,
+        10,
         10,
         10
         );
 
+    QLabel *title = new QLabel("📊  Statistiques des stations");
+    title->setObjectName("cardTitle");
+    layout->addWidget(title);
 
     statisticsWidget =
         new StatisticsWidget;
@@ -1393,21 +1406,23 @@ QGroupBox *StationWindow::createStatistics()
 
 QGroupBox *StationWindow::createLocationBox()
 {
-    QGroupBox *box =
-        new QGroupBox(
-            "📍   Localisation géographique – Tunisie"
-            );
+    QGroupBox *box = new QGroupBox;
 
 
     QVBoxLayout *layout =
         new QVBoxLayout(box);
 
     layout->setContentsMargins(
-        15,
-        20,
-        15,
-        15
+        12,
+        10,
+        12,
+        12
         );
+
+    QLabel *boxTitle =
+        new QLabel("📍  Localisation géographique – Tunisie");
+    boxTitle->setObjectName("cardTitle");
+    layout->addWidget(boxTitle);
 
 
     QLabel *locationTitle =
@@ -1511,6 +1526,12 @@ void StationWindow::setupStyle()
         #headerSubtitle {
             color: #E5F1FF;
             font-size: 12px;
+        }
+
+        #cardTitle {
+            color: #173B6C;
+            font-size: 15px;
+            font-weight: bold;
         }
 
         QGroupBox {
@@ -1617,6 +1638,45 @@ void StationWindow::setupStyle()
 // ============================================================
 // DEMO DATA
 // ============================================================
+
+void StationWindow::loadStationsFromDatabase()
+{
+    stations.clear();
+
+    QSqlQuery query(QSqlDatabase::database());
+    if (!query.exec(
+            "SELECT ID_STATION, NOM, LOCALISATION, LATITUDE, LONGITUDE, "
+            "DATE_INSTALLATION_STATION, TYPE_STATION, STATUT_STATION "
+            "FROM STATIONS ORDER BY ID_STATION"))
+    {
+        QMessageBox::critical(
+            this,
+            "Erreur de base de données",
+            "Impossible de charger les stations depuis la base de données.\n"
+                + query.lastError().text()
+            );
+        return;
+    }
+
+    while (query.next())
+    {
+        Station station;
+        station.id = query.value(0).toString().toInt();
+        station.nom = query.value(1).toString();
+        station.localisation = query.value(2).toString();
+        station.latitude = query.value(3).toDouble();
+        station.longitude = query.value(4).toDouble();
+
+        const QVariant dateValue = query.value(5);
+        station.dateInstallation = dateValue.toDate();
+        if (!station.dateInstallation.isValid())
+            station.dateInstallation = dateValue.toDateTime().date();
+
+        station.type = query.value(6).toString();
+        station.etat = query.value(7).toString();
+        stations.append(station);
+    }
+}
 
 void StationWindow::loadDemoData()
 {
@@ -2003,6 +2063,40 @@ void StationWindow::addStation()
     station.etat =
         etatCombo->currentText();
 
+    QSqlQuery query(QSqlDatabase::database());
+    if (!query.prepare(
+        "INSERT INTO STATIONS (ID_STATION, NOM, LOCALISATION, LATITUDE, LONGITUDE, "
+        "DATE_INSTALLATION_STATION, TYPE_STATION, STATUT_STATION) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+        ))
+    {
+        QMessageBox::critical(
+            this,
+            "Erreur de base de données",
+            "Impossible de préparer l'ajout de la station.\n"
+                + query.lastError().text()
+            );
+        return;
+    }
+    query.addBindValue(station.id);
+    query.addBindValue(station.nom);
+    query.addBindValue(station.localisation);
+    query.addBindValue(station.latitude);
+    query.addBindValue(station.longitude);
+    query.addBindValue(station.dateInstallation);
+    query.addBindValue(station.type);
+    query.addBindValue(station.etat);
+
+    if (!query.exec())
+    {
+        QMessageBox::critical(
+            this,
+            "Erreur de base de données",
+            "La station n'a pas été enregistrée dans la base de données.\n"
+                + query.lastError().text()
+            );
+        return;
+    }
 
     stations.append(
         station
@@ -2053,6 +2147,99 @@ void StationWindow::modifyStation()
             ->text()
             .toInt();
 
+    Station updatedStation;
+    updatedStation.id = idEdit->value();
+    updatedStation.nom = nomEdit->text().trimmed();
+    updatedStation.localisation = localisationEdit->text().trimmed();
+    updatedStation.latitude = latitudeEdit->value();
+    updatedStation.longitude = longitudeEdit->value();
+    updatedStation.dateInstallation = dateInstallationEdit->date();
+    updatedStation.type = typeCombo->currentText();
+    updatedStation.etat = etatCombo->currentText();
+
+    if (updatedStation.id != id)
+    {
+        QSqlQuery idCheck(QSqlDatabase::database());
+        if (!idCheck.prepare(
+                "SELECT ID_STATION FROM STATIONS WHERE ID_STATION = ?"))
+        {
+            QMessageBox::critical(
+                this,
+                "Erreur de base de données",
+                "Impossible de vérifier l'ID de la station.\n"
+                    + idCheck.lastError().text()
+                );
+            return;
+        }
+
+        idCheck.addBindValue(updatedStation.id);
+        if (!idCheck.exec())
+        {
+            QMessageBox::critical(
+                this,
+                "Erreur de base de données",
+                "Impossible de vérifier l'ID de la station.\n"
+                    + idCheck.lastError().text()
+                );
+            return;
+        }
+
+        if (idCheck.next())
+        {
+            QMessageBox::warning(
+                this,
+                "ID déjà utilisé",
+                "Une autre station utilise déjà cet ID. Choisissez un ID libre."
+                );
+            return;
+        }
+    }
+
+    QSqlQuery query(QSqlDatabase::database());
+    if (!query.prepare(
+        "UPDATE STATIONS SET ID_STATION = ?, NOM = ?, LOCALISATION = ?, "
+        "LATITUDE = ?, LONGITUDE = ?, DATE_INSTALLATION_STATION = ?, "
+        "TYPE_STATION = ?, STATUT_STATION = ? WHERE ID_STATION = ?"
+        ))
+    {
+        QMessageBox::critical(
+            this,
+            "Erreur de base de données",
+            "Impossible de préparer la modification de la station.\n"
+                + query.lastError().text()
+            );
+        return;
+    }
+    query.addBindValue(updatedStation.id);
+    query.addBindValue(updatedStation.nom);
+    query.addBindValue(updatedStation.localisation);
+    query.addBindValue(updatedStation.latitude);
+    query.addBindValue(updatedStation.longitude);
+    query.addBindValue(updatedStation.dateInstallation);
+    query.addBindValue(updatedStation.type);
+    query.addBindValue(updatedStation.etat);
+    query.addBindValue(id);
+
+    if (!query.exec())
+    {
+        QMessageBox::critical(
+            this,
+            "Erreur de base de données",
+            "La modification n'a pas été enregistrée dans la base de données.\n"
+                + query.lastError().text()
+            );
+        return;
+    }
+
+    if (query.numRowsAffected() == 0)
+    {
+        QMessageBox::warning(
+            this,
+            "Station introuvable",
+            "Aucune station correspondante n'a été modifiée dans la base de données."
+            );
+        return;
+    }
 
     for (int i = 0;
          i < stations.size();
@@ -2144,6 +2331,40 @@ void StationWindow::deleteStation()
 
     if (answer != QMessageBox::Yes)
         return;
+
+    QSqlQuery query(QSqlDatabase::database());
+    if (!query.prepare("DELETE FROM STATIONS WHERE ID_STATION = ?"))
+    {
+        QMessageBox::critical(
+            this,
+            "Erreur de base de données",
+            "Impossible de préparer la suppression de la station.\n"
+                + query.lastError().text()
+            );
+        return;
+    }
+    query.addBindValue(id);
+
+    if (!query.exec())
+    {
+        QMessageBox::critical(
+            this,
+            "Erreur de base de données",
+            "La station n'a pas été supprimée de la base de données.\n"
+                + query.lastError().text()
+            );
+        return;
+    }
+
+    if (query.numRowsAffected() == 0)
+    {
+        QMessageBox::warning(
+            this,
+            "Station introuvable",
+            "Aucune station correspondante n'a été supprimée de la base de données."
+            );
+        return;
+    }
 
 
     for (int i = 0;

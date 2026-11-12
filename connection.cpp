@@ -28,8 +28,8 @@ Connection& Connection::createInstance() {
 
 bool Connection::createConnection() {
     db.setDatabaseName("Source_Projet2A");// saisissez le nom de votre source de données ici
-    db.setUserName("system");// saisissez votre nom d'utilisateur ici
-    db.setPassword("amine@esprit");// saisissez votre mot de passe utilisateur ici
+    db.setUserName("amine");// saisissez votre nom d'utilisateur ici
+    db.setPassword("0000");// saisissez votre mot de passe utilisateur ici
 
     if (db.open()) {
         qDebug() << "Connexion établie";

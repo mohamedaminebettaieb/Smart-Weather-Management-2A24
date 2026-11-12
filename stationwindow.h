@@ -121,6 +121,7 @@ private:
     // =========================
 
     void loadDemoData();
+    void loadStationsFromDatabase();
 
     // =========================
     // Tableau

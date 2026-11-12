@@ -263,7 +263,7 @@ void Technicienne::setupUI()
         new QVBoxLayout(content);
 
     contentLayout->setContentsMargins(
-        18, 0, 18, 8
+        0, 0, 0, 8
         );
 
     contentLayout->setSpacing(8);
@@ -276,6 +276,7 @@ void Technicienne::setupUI()
     QWidget *header = new QWidget();
 
     header->setFixedHeight(70);
+    header->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
 
     QHBoxLayout *headerLayout =
         new QHBoxLayout(header);
