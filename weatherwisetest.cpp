@@ -1,10 +1,12 @@
+
 #include "weatherwisetest.h"
 #include "equipement.h"
+
 #include <QSqlQueryModel>
-#include <QSqlRecord>
 #include <QSqlError>
 #include <QDebug>
 #include <QAbstractItemModel>
+#include <QAbstractItemView>
 #include <QComboBox>
 #include <QDateTime>
 #include <QDateEdit>
@@ -21,31 +23,29 @@
 #include <QPdfWriter>
 #include <QPushButton>
 #include <QTableWidget>
+#include <QTableWidgetItem>
 #include <QTextDocument>
 #include <QTimeZone>
 #include <QTimer>
 #include <QVBoxLayout>
+#include <QVariant>
+#include <QBrush>
 #include <algorithm>
 
-/* ------------------------------------------------------------------ */
-/* Pays utilisé                                                        */
-/* ------------------------------------------------------------------ */
+// ==========================================
+// PAYS UTILISE
+// ==========================================
 
 static const QLocale::Territory kForcedCountry = QLocale::Tunisia;
 
-/* ------------------------------------------------------------------ */
-/* Données géographiques                                               */
-/* ------------------------------------------------------------------ */
 
-struct CityRow {
-    const char *n;
-    double lat;
-    double lon;
-};
+// ==========================================
+// DONNEES GEOGRAPHIQUES
+// ==========================================
 
 #define COUNT(a) int(sizeof(a) / sizeof(a[0]))
 
-/* Tunisie */
+// TUNISIE
 
 static const double TN_OUT[][2] = {
     {37.00, 8.60}, {37.35, 9.80}, {37.10, 11.00},
@@ -57,31 +57,30 @@ static const double TN_OUT[][2] = {
     {36.90, 8.40}
 };
 
-static const CityRow TN_CITIES[] = {
-    {"Tunis", 36.80, 10.18},
-    {"Sfax", 34.74, 10.76},
-    {"Sousse", 35.83, 10.64},
-    {"Kairouan", 35.68, 10.10},
-    {"Gabès", 33.88, 10.10},
-    {"Tozeur", 33.92, 8.13},
-    {"Kasserine", 35.17, 8.83},
-    {"Bizerte", 37.27, 9.87},
-    {"Gafsa", 34.43, 8.78},
-    {"Médenine", 33.35, 10.50},
-    {"Tataouine", 32.93, 10.45},
-    {"Nabeul", 36.45, 10.74},
-    {"Monastir", 35.78, 10.83},
-    {"Mahdia", 35.50, 11.06},
-    {"Béja", 36.73, 9.18},
-    {"Jendouba", 36.50, 8.78},
-    {"Le Kef", 36.17, 8.71},
-    {"Siliana", 36.08, 9.37},
-    {"Zaghouan", 36.40, 10.14},
-    {"Sidi Bouzid", 35.04, 9.49},
-    {"Kébili", 33.70, 8.97}
+static const char *TN_NAMES[] = {
+    "Tunis", "Sfax", "Sousse", "Kairouan", "Gabès",
+    "Tozeur", "Kasserine", "Bizerte", "Gafsa",
+    "Médenine", "Tataouine", "Nabeul", "Monastir",
+    "Mahdia", "Béja", "Jendouba", "Le Kef",
+    "Siliana", "Zaghouan", "Sidi Bouzid", "Kébili"
 };
 
-/* Algérie */
+static const double TN_LAT[] = {
+    36.80, 34.74, 35.83, 35.68, 33.88, 33.92,
+    35.17, 37.27, 34.43, 33.35, 32.93, 36.45,
+    35.78, 35.50, 36.73, 36.50, 36.17, 36.08,
+    36.40, 35.04, 33.70
+};
+
+static const double TN_LON[] = {
+    10.18, 10.76, 10.64, 10.10, 10.10, 8.13,
+    8.83, 9.87, 8.78, 10.50, 10.45, 10.74,
+    10.83, 11.06, 9.18, 8.78, 8.71, 9.37,
+    10.14, 9.49, 8.97
+};
+
+
+// ALGERIE
 
 static const double DZ_OUT[][2] = {
     {35.1, -2.2}, {36.5, 1.0}, {36.8, 3.0},
@@ -93,21 +92,24 @@ static const double DZ_OUT[][2] = {
     {32.0, -2.9}
 };
 
-static const CityRow DZ_CITIES[] = {
-    {"Alger", 36.75, 3.06},
-    {"Oran", 35.70, -0.63},
-    {"Constantine", 36.37, 6.61},
-    {"Annaba", 36.90, 7.77},
-    {"Sétif", 36.19, 5.41},
-    {"Batna", 35.56, 6.17},
-    {"Biskra", 34.85, 5.73},
-    {"Ghardaïa", 32.49, 3.67},
-    {"Tamanrasset", 22.79, 5.52},
-    {"Béchar", 31.62, -2.22},
-    {"Tlemcen", 34.88, -1.32}
+static const char *DZ_NAMES[] = {
+    "Alger", "Oran", "Constantine", "Annaba", "Sétif",
+    "Batna", "Biskra", "Ghardaïa", "Tamanrasset",
+    "Béchar", "Tlemcen"
 };
 
-/* Maroc */
+static const double DZ_LAT[] = {
+    36.75, 35.70, 36.37, 36.90, 36.19,
+    35.56, 34.85, 32.49, 22.79, 31.62, 34.88
+};
+
+static const double DZ_LON[] = {
+    3.06, -0.63, 6.61, 7.77, 5.41,
+    6.17, 5.73, 3.67, 5.52, -2.22, -1.32
+};
+
+
+// MAROC
 
 static const double MA_OUT[][2] = {
     {35.8, -5.9}, {35.2, -2.9}, {34.7, -1.9},
@@ -117,19 +119,24 @@ static const double MA_OUT[][2] = {
     {33.6, -7.6}, {35.0, -6.5}
 };
 
-static const CityRow MA_CITIES[] = {
-    {"Rabat", 34.02, -6.84},
-    {"Casablanca", 33.57, -7.59},
-    {"Marrakech", 31.63, -8.01},
-    {"Fès", 34.03, -5.00},
-    {"Tanger", 35.76, -5.80},
-    {"Agadir", 30.43, -9.60},
-    {"Oujda", 34.68, -1.91},
-    {"Meknès", 33.89, -5.55},
-    {"Ouarzazate", 30.92, -6.89}
+static const char *MA_NAMES[] = {
+    "Rabat", "Casablanca", "Marrakech", "Fès",
+    "Tanger", "Agadir", "Oujda", "Meknès",
+    "Ouarzazate"
 };
 
-/* Libye */
+static const double MA_LAT[] = {
+    34.02, 33.57, 31.63, 34.03, 35.76,
+    30.43, 34.68, 33.89, 30.92
+};
+
+static const double MA_LON[] = {
+    -6.84, -7.59, -8.01, -5.00, -5.80,
+    -9.60, -1.91, -5.55, -6.89
+};
+
+
+// LIBYE
 
 static const double LY_OUT[][2] = {
     {33.1, 11.5}, {32.9, 13.0}, {32.5, 15.2},
@@ -140,18 +147,23 @@ static const double LY_OUT[][2] = {
     {32.2, 10.4}
 };
 
-static const CityRow LY_CITIES[] = {
-    {"Tripoli", 32.89, 13.19},
-    {"Benghazi", 32.12, 20.07},
-    {"Misrata", 32.38, 15.09},
-    {"Sebha", 27.04, 14.43},
-    {"Tobrouk", 32.08, 23.98},
-    {"Syrte", 31.21, 16.59},
-    {"Ghadamès", 30.13, 9.50},
-    {"Al Bayda", 32.77, 21.75}
+static const char *LY_NAMES[] = {
+    "Tripoli", "Benghazi", "Misrata", "Sebha",
+    "Tobrouk", "Syrte", "Ghadamès", "Al Bayda"
 };
 
-/* Égypte */
+static const double LY_LAT[] = {
+    32.89, 32.12, 32.38, 27.04,
+    32.08, 31.21, 30.13, 32.77
+};
+
+static const double LY_LON[] = {
+    13.19, 20.07, 15.09, 14.43,
+    23.98, 16.59, 9.50, 21.75
+};
+
+
+// EGYPTE
 
 static const double EG_OUT[][2] = {
     {31.6, 25.1}, {31.3, 29.0}, {31.5, 31.0},
@@ -160,20 +172,24 @@ static const double EG_OUT[][2] = {
     {22.0, 36.9}, {22.0, 25.0}
 };
 
-static const CityRow EG_CITIES[] = {
-    {"Le Caire", 30.04, 31.24},
-    {"Alexandrie", 31.20, 29.92},
-    {"Louxor", 25.69, 32.64},
-    {"Assouan", 24.09, 32.90},
-    {"Port-Saïd", 31.27, 32.30},
-    {"Suez", 29.97, 32.55},
-    {"Hurghada", 27.26, 33.81},
-    {"Charm el-Cheikh", 27.91, 34.33},
-    {"Marsa Matruh", 31.35, 27.24},
-    {"Assiout", 27.18, 31.18}
+static const char *EG_NAMES[] = {
+    "Le Caire", "Alexandrie", "Louxor", "Assouan",
+    "Port-Saïd", "Suez", "Hurghada",
+    "Charm el-Cheikh", "Marsa Matruh", "Assiout"
 };
 
-/* France */
+static const double EG_LAT[] = {
+    30.04, 31.20, 25.69, 24.09, 31.27,
+    29.97, 27.26, 27.91, 31.35, 27.18
+};
+
+static const double EG_LON[] = {
+    31.24, 29.92, 32.64, 32.90, 32.30,
+    32.55, 33.81, 34.33, 27.24, 31.18
+};
+
+
+// FRANCE
 
 static const double FR_OUT[][2] = {
     {51.0, 2.5}, {50.1, 1.6}, {49.4, 0.2},
@@ -187,68 +203,95 @@ static const double FR_OUT[][2] = {
     {50.1, 4.8}, {50.7, 3.2}
 };
 
-static const CityRow FR_CITIES[] = {
-    {"Paris", 48.86, 2.35},
-    {"Marseille", 43.30, 5.37},
-    {"Lyon", 45.76, 4.84},
-    {"Toulouse", 43.60, 1.44},
-    {"Nice", 43.70, 7.27},
-    {"Nantes", 47.22, -1.55},
-    {"Strasbourg", 48.57, 7.75},
-    {"Bordeaux", 44.84, -0.58},
-    {"Lille", 50.63, 3.06},
-    {"Rennes", 48.11, -1.68}
+static const char *FR_NAMES[] = {
+    "Paris", "Marseille", "Lyon", "Toulouse", "Nice",
+    "Nantes", "Strasbourg", "Bordeaux", "Lille", "Rennes"
 };
 
-/* ------------------------------------------------------------------ */
+static const double FR_LAT[] = {
+    48.86, 43.30, 45.76, 43.60, 43.70,
+    47.22, 48.57, 44.84, 50.63, 48.11
+};
+
+static const double FR_LON[] = {
+    2.35, 5.37, 4.84, 1.44, 7.27,
+    -1.55, 7.75, -0.58, 3.06, -1.68
+};
+
+
+// ==========================================
+// REMPLISSAGE DES DONNEES GEOGRAPHIQUES
+// ==========================================
 
 static void fillGeo(
     EquipementCountryGeo &g,
     const char *nom,
     const double (*out)[2],
     int nOut,
-    const CityRow *c,
+    const char **names,
+    const double *lat,
+    const double *lon,
     int nC)
 {
     g = EquipementCountryGeo();
     g.nom = QString::fromUtf8(nom);
 
-    for (int i = 0; i < nOut; ++i) {
-        g.contour.append(QPointF(out[i][0], out[i][1]));
+    for (int i = 0; i < nOut; ++i)
+    {
+        g.contour.append(
+            QPointF(out[i][0], out[i][1])
+            );
     }
 
-    for (int i = 0; i < nC; ++i) {
-        g.addVille(QString::fromUtf8(c[i].n), c[i].lat, c[i].lon);
+    for (int i = 0; i < nC; ++i)
+    {
+        g.addVille(
+            QString::fromUtf8(names[i]),
+            lat[i],
+            lon[i]
+            );
     }
 }
 
-/* ------------------------------------------------------------------ */
 
-static bool buildGeo(QLocale::Territory t, EquipementCountryGeo &g)
+// ==========================================
+// CONSTRUCTION DE LA CARTE
+// ==========================================
+
+static bool buildGeo(
+    QLocale::Territory t,
+    EquipementCountryGeo &g)
 {
-    switch (t) {
+    switch (t)
+    {
     case QLocale::Tunisia:
-        fillGeo(g, "Tunisie", TN_OUT, COUNT(TN_OUT), TN_CITIES, COUNT(TN_CITIES));
+        fillGeo(g, "Tunisie", TN_OUT, COUNT(TN_OUT),
+                TN_NAMES, TN_LAT, TN_LON, COUNT(TN_NAMES));
         return true;
 
     case QLocale::Algeria:
-        fillGeo(g, "Algérie", DZ_OUT, COUNT(DZ_OUT), DZ_CITIES, COUNT(DZ_CITIES));
+        fillGeo(g, "Algérie", DZ_OUT, COUNT(DZ_OUT),
+                DZ_NAMES, DZ_LAT, DZ_LON, COUNT(DZ_NAMES));
         return true;
 
     case QLocale::Morocco:
-        fillGeo(g, "Maroc", MA_OUT, COUNT(MA_OUT), MA_CITIES, COUNT(MA_CITIES));
+        fillGeo(g, "Maroc", MA_OUT, COUNT(MA_OUT),
+                MA_NAMES, MA_LAT, MA_LON, COUNT(MA_NAMES));
         return true;
 
     case QLocale::Libya:
-        fillGeo(g, "Libye", LY_OUT, COUNT(LY_OUT), LY_CITIES, COUNT(LY_CITIES));
+        fillGeo(g, "Libye", LY_OUT, COUNT(LY_OUT),
+                LY_NAMES, LY_LAT, LY_LON, COUNT(LY_NAMES));
         return true;
 
     case QLocale::Egypt:
-        fillGeo(g, "Égypte", EG_OUT, COUNT(EG_OUT), EG_CITIES, COUNT(EG_CITIES));
+        fillGeo(g, "Égypte", EG_OUT, COUNT(EG_OUT),
+                EG_NAMES, EG_LAT, EG_LON, COUNT(EG_NAMES));
         return true;
 
     case QLocale::France:
-        fillGeo(g, "France", FR_OUT, COUNT(FR_OUT), FR_CITIES, COUNT(FR_CITIES));
+        fillGeo(g, "France", FR_OUT, COUNT(FR_OUT),
+                FR_NAMES, FR_LAT, FR_LON, COUNT(FR_NAMES));
         return true;
 
     default:
@@ -256,9 +299,10 @@ static bool buildGeo(QLocale::Territory t, EquipementCountryGeo &g)
     }
 }
 
-/* ------------------------------------------------------------------ */
-/* Utilitaires                                                         */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// UTILITAIRES
+// ==========================================
 
 static QFrame *makeCard()
 {
@@ -274,33 +318,44 @@ static QLabel *makeCardTitle(const QString &t)
     return l;
 }
 
-/* ------------------------------------------------------------------ */
-/* Tri                                                                 */
-/* ------------------------------------------------------------------ */
 
-static bool lessNom(const Equipement &a, const Equipement &b)
+// ==========================================
+// FONCTIONS DE TRI
+// ==========================================
+
+static bool lessNom(
+    const Equipement &a,
+    const Equipement &b)
 {
-    return a.nom.localeAwareCompare(b.nom) < 0;
+    return a.getNom().localeAwareCompare(b.getNom()) < 0;
 }
 
-static bool lessLocalisation(const Equipement &a, const Equipement &b)
+static bool lessLocalisation(
+    const Equipement &a,
+    const Equipement &b)
 {
-    return a.localisation.localeAwareCompare(b.localisation) < 0;
+    return a.getLocalisation().localeAwareCompare(
+               b.getLocalisation()) < 0;
 }
 
-static bool lessStatut(const Equipement &a, const Equipement &b)
+static bool lessStatut(
+    const Equipement &a,
+    const Equipement &b)
 {
-    return a.statut.localeAwareCompare(b.statut) < 0;
+    return a.getStatut().localeAwareCompare(b.getStatut()) < 0;
 }
 
-static bool lessType(const Equipement &a, const Equipement &b)
+static bool lessType(
+    const Equipement &a,
+    const Equipement &b)
 {
-    return a.type.localeAwareCompare(b.type) < 0;
+    return a.getType().localeAwareCompare(b.getType()) < 0;
 }
 
-/* ------------------------------------------------------------------ */
-/* Ajouter un champ dans la grille                                     */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// AJOUTER UN CHAMP DANS LA GRILLE
+// ==========================================
 
 static void addField(
     QGridLayout *g,
@@ -311,13 +366,15 @@ static void addField(
 {
     QLabel *l = new QLabel(label);
     l->setMinimumWidth(115);
+
     g->addWidget(l, row, col * 2);
     g->addWidget(w, row, col * 2 + 1);
 }
 
-/* ------------------------------------------------------------------ */
-/* Constructeur                                                        */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// CONSTRUCTEUR
+// ==========================================
 
 WeatherWiseTest::WeatherWiseTest(QWidget *parent)
     : QMainWindow(parent),
@@ -339,18 +396,23 @@ WeatherWiseTest::WeatherWiseTest(QWidget *parent)
     m_statut(0),
     m_type(0)
 {
-    setWindowTitle("Smart Weather Management - Gestion des équipements");
+    setWindowTitle(
+        "Smart Weather Management - Gestion des équipements"
+        );
+
     setStyleSheet(styleSheet());
     detectCountry();
 
     QWidget *central = new QWidget;
     QHBoxLayout *root = new QHBoxLayout(central);
+
     root->setContentsMargins(0, 0, 0, 0);
     root->setSpacing(0);
     root->addWidget(buildSidebar());
 
     QWidget *right = new QWidget;
     QVBoxLayout *rv = new QVBoxLayout(right);
+
     rv->setContentsMargins(0, 0, 0, 0);
     rv->setSpacing(0);
     rv->addWidget(buildHeader());
@@ -359,87 +421,149 @@ WeatherWiseTest::WeatherWiseTest(QWidget *parent)
     content->setObjectName("content");
 
     QGridLayout *g = new QGridLayout(content);
+
     g->setContentsMargins(20, 12, 20, 12);
     g->setSpacing(12);
 
-    /* Même organisation que la version bureaux */
     g->addWidget(buildFormCard(), 0, 0, 1, 2);
     g->addWidget(buildToolbar(), 1, 0, 1, 2);
     g->addWidget(buildTableCard(), 2, 0);
 
     QWidget *col = new QWidget;
     QVBoxLayout *cv = new QVBoxLayout(col);
+
     cv->setContentsMargins(0, 0, 0, 0);
     cv->setSpacing(12);
+
     cv->addWidget(buildStatsCard(), 1);
     cv->addWidget(buildMapCard(), 1);
 
     g->addWidget(col, 2, 1);
+
     g->setColumnStretch(0, 3);
     g->setColumnStretch(1, 2);
     g->setRowStretch(2, 1);
 
     rv->addWidget(content, 1);
     root->addWidget(right, 1);
+
     setCentralWidget(central);
 
-    // Charger les équipements réels depuis Oracle via EquipementDAO.
+
+    // Charger les équipements depuis Oracle
+
     m_equipements.clear();
+
     EquipementDAO dao;
     QSqlQueryModel *model = dao.afficher();
 
-    if (model && !model->lastError().isValid()) {
-        for (int row = 0; row < model->rowCount(); ++row) {
+    if (model && !model->lastError().isValid())
+    {
+        for (int row = 0; row < model->rowCount(); ++row)
+        {
             Equipement e;
-            e.id = model->data(model->index(row, 0)).toString();
-            e.nom = model->data(model->index(row, 1)).toString();
-            e.localisation = model->data(model->index(row, 2)).toString();
-            e.statut = model->data(model->index(row, 3)).toString();
 
-            const QVariant dateValue = model->data(model->index(row, 4));
-            e.dateInstallation = dateValue.toDate();
-            if (!e.dateInstallation.isValid()) {
+            e.setId(
+                model->data(model->index(row, 0)).toString()
+                );
+
+            e.setNom(
+                model->data(model->index(row, 1)).toString()
+                );
+
+            e.setLocalisation(
+                model->data(model->index(row, 2)).toString()
+                );
+
+            e.setStatut(
+                model->data(model->index(row, 3)).toString()
+                );
+
+            const QVariant dateValue =
+                model->data(model->index(row, 4));
+
+            QDate date = dateValue.toDate();
+
+            if (!date.isValid())
+            {
                 const QString dateText = dateValue.toString();
-                e.dateInstallation = QDate::fromString(dateText, "yyyy-MM-dd");
-                if (!e.dateInstallation.isValid())
-                    e.dateInstallation = QDate::fromString(dateText, "dd/MM/yyyy");
-                if (!e.dateInstallation.isValid())
-                    e.dateInstallation = QDate::fromString(dateText.left(10), "yyyy-MM-dd");
+
+                date = QDate::fromString(dateText, "yyyy-MM-dd");
+
+                if (!date.isValid())
+                {
+                    date = QDate::fromString(
+                        dateText, "dd/MM/yyyy"
+                        );
+                }
+
+                if (!date.isValid())
+                {
+                    date = QDate::fromString(
+                        dateText.left(10), "yyyy-MM-dd"
+                        );
+                }
             }
 
-            e.type = model->data(model->index(row, 5)).toString();
+            e.setDateInstallation(date);
+
+            e.setType(
+                model->data(model->index(row, 5)).toString()
+                );
+
             m_equipements.append(e);
         }
-    } else if (model) {
-        qDebug() << "Erreur chargement équipements Oracle:" << model->lastError().text();
-        QMessageBox::warning(this, "Erreur Oracle",
-                             QString::fromUtf8("Impossible de charger les équipements depuis Oracle :\n")
-                                 + model->lastError().text());
     }
+    else if (model)
+    {
+        qDebug() << "Erreur chargement équipements Oracle:"
+                 << model->lastError().text();
+
+        QMessageBox::warning(
+            this,
+            "Erreur Oracle",
+            QString::fromUtf8(
+                "Impossible de charger les équipements depuis Oracle :\n"
+                ) + model->lastError().text()
+            );
+    }
+
     delete model;
 
     onClear();
     refreshTable();
 
     QTimer *clock = new QTimer(this);
-    connect(clock, SIGNAL(timeout()), this, SLOT(updateClock()));
+
+    connect(
+        clock,
+        SIGNAL(timeout()),
+        this,
+        SLOT(updateClock())
+        );
+
     clock->start(1000);
     updateClock();
 }
 
-/* ------------------------------------------------------------------ */
-/* Pays                                                                */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// PAYS
+// ==========================================
 
 void WeatherWiseTest::detectCountry()
 {
     QLocale::Territory cand[3];
+
     cand[0] = kForcedCountry;
     cand[1] = QLocale::system().territory();
     cand[2] = QTimeZone::systemTimeZone().territory();
 
-    for (int i = 0; i < 3; ++i) {
-        if (cand[i] != QLocale::AnyTerritory && buildGeo(cand[i], m_geo)) {
+    for (int i = 0; i < 3; ++i)
+    {
+        if (cand[i] != QLocale::AnyTerritory &&
+            buildGeo(cand[i], m_geo))
+        {
             return;
         }
     }
@@ -449,156 +573,246 @@ void WeatherWiseTest::detectCountry()
     QLocale::Territory detected =
         cand[1] != QLocale::AnyTerritory ? cand[1] : cand[2];
 
-    m_geoNote = QString::fromUtf8(" (carte de %1 indisponible)")
-                    .arg(QLocale::territoryToString(detected));
+    m_geoNote =
+        QString::fromUtf8(" (carte de %1 indisponible)")
+            .arg(QLocale::territoryToString(detected));
 }
 
-/* ------------------------------------------------------------------ */
-/* Données exemples                                                    */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// DONNEES EXEMPLES
+// ==========================================
 
 void WeatherWiseTest::loadSampleData()
 {
     m_equipements.clear();
 
-    struct Row {
-        const char *nom;
-        int ville;
-        const char *statut;
-        const char *type;
-        int y;
-        int m;
-        int d;
+    // Informations des équipements
+    const char *noms[] = {
+        "Station météo principale",
+        "Thermomètre central",
+        "Baromètre Sousse",
+        "Anémomètre Kairouan",
+        "Pluviomètre Gabès",
+        "Hygromètre Tozeur",
+        "Capteur Kasserine",
+        "Station Bizerte",
+        "Capteur Gafsa",
+        "Station Médenine"
     };
 
-    static const Row rows[] = {
-        {"Station météo principale", 0, "Actif", "Station météo", 2018, 3, 12},
-        {"Thermomètre central", 1, "Actif", "Thermomètre", 2019, 7, 25},
-        {"Baromètre Sousse", 2, "Actif", "Baromètre", 2020, 11, 10},
-        {"Anémomètre Kairouan", 3, "Inactif", "Anémomètre", 2021, 5, 3},
-        {"Pluviomètre Gabès", 4, "Actif", "Pluviomètre", 2022, 9, 17},
-        {"Hygromètre Tozeur", 5, "Actif", "Hygromètre", 2023, 2, 28},
-        {"Capteur Kasserine", 6, "Inactif", "Capteur météo", 2023, 6, 14},
-        {"Station Bizerte", 7, "Actif", "Station météo", 2023, 12, 22},
-        {"Capteur Gafsa", 8, "En maintenance", "Capteur météo", 2024, 4, 8},
-        {"Station Médenine", 9, "Actif", "Station météo", 2024, 10, 16}
+    const int villes[] = {
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9
     };
 
-    const int count = sizeof(rows) / sizeof(rows[0]);
+    const char *statuts[] = {
+        "Actif",
+        "Actif",
+        "Actif",
+        "Inactif",
+        "Actif",
+        "Actif",
+        "Inactif",
+        "Actif",
+        "En maintenance",
+        "Actif"
+    };
 
-    for (int i = 0; i < count; ++i) {
+    const char *types[] = {
+        "Station météo",
+        "Thermomètre",
+        "Baromètre",
+        "Anémomètre",
+        "Pluviomètre",
+        "Hygromètre",
+        "Capteur météo",
+        "Station météo",
+        "Capteur météo",
+        "Station météo"
+    };
+
+    const int annees[] = {
+        2018, 2019, 2020, 2021, 2022,
+        2023, 2023, 2023, 2024, 2024
+    };
+
+    const int mois[] = {
+        3, 7, 11, 5, 9, 2, 6, 12, 4, 10
+    };
+
+    const int jours[] = {
+        12, 25, 10, 3, 17, 28, 14, 22, 8, 16
+    };
+
+    const int count = 10;
+
+    for (int i = 0; i < count; ++i)
+    {
         Equipement e;
-        e.id = QString("E%1").arg(i + 1, 3, 10, QChar('0'));
-        e.nom = QString::fromUtf8(rows[i].nom);
 
-        if (!m_geo.villes.isEmpty() && rows[i].ville < m_geo.villes.size()) {
-            e.localisation = m_geo.villes.at(rows[i].ville);
-        } else {
-            e.localisation = "Tunis";
+        e.setId(
+            QString("E%1").arg(i + 1, 3, 10, QChar('0'))
+            );
+
+        e.setNom(
+            QString::fromUtf8(noms[i])
+            );
+
+        if (!m_geo.villes.isEmpty() &&
+            villes[i] < m_geo.villes.size())
+        {
+            e.setLocalisation(
+                m_geo.villes.at(villes[i])
+                );
+        }
+        else
+        {
+            e.setLocalisation("Tunis");
         }
 
-        e.statut = QString::fromUtf8(rows[i].statut);
-        e.type = QString::fromUtf8(rows[i].type);
-        e.dateInstallation = QDate(rows[i].y, rows[i].m, rows[i].d);
+        e.setStatut(
+            QString::fromUtf8(statuts[i])
+            );
+
+        e.setType(
+            QString::fromUtf8(types[i])
+            );
+
+        e.setDateInstallation(
+            QDate(annees[i], mois[i], jours[i])
+            );
+
         m_equipements.append(e);
     }
 }
 
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// GENERER UN NOUVEL ID
+// ==========================================
 
 QString WeatherWiseTest::nextId() const
 {
     int mx = 0;
 
-    for (int i = 0; i < m_equipements.size(); ++i) {
-        QString id = m_equipements.at(i).id;
+    for (int i = 0; i < m_equipements.size(); ++i)
+    {
+        QString id = m_equipements.at(i).getId();
 
-        if (id.length() > 1) {
+        if (id.length() > 1)
+        {
             mx = qMax(mx, id.mid(1).toInt());
         }
     }
 
-    return QString("E%1").arg(mx + 1, 3, 10, QChar('0'));
+    return QString("E%1").arg(
+        mx + 1, 3, 10, QChar('0')
+        );
 }
 
-/* ------------------------------------------------------------------ */
-/* Sidebar                                                             */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// SIDEBAR
+// ==========================================
 
 QWidget *WeatherWiseTest::buildSidebar()
 {
     QFrame *side = new QFrame;
+
     side->setObjectName("sidebar");
     side->setFixedWidth(300);
 
     QVBoxLayout *v = new QVBoxLayout(side);
+
     v->setContentsMargins(0, 14, 0, 14);
     v->setSpacing(6);
 
     QLabel *sun = new QLabel(QString::fromUtf8("☀"));
+
     sun->setObjectName("sunIcon");
     sun->setAlignment(Qt::AlignCenter);
+
     v->addWidget(sun);
 
-    QLabel *brand = new QLabel("SMART WEATHER\nMANAGEMENT");
+    QLabel *brand = new QLabel(
+        "SMART WEATHER\nMANAGEMENT"
+        );
+
     brand->setObjectName("brand");
     brand->setAlignment(Qt::AlignCenter);
+
     v->addWidget(brand);
     v->addSpacing(26);
 
-    struct Item {
-        const char *text;
-        bool active;
+    const char *items[] = {
+        "⌂   Accueil",
+        "🏢   Gestion de bureau",
+        "⚙   Gestion des équipements",
+        "👷   Gestion des techniciens",
+        "📡   Gestion des stations",
+        "👥   Gestion des utilisateurs"
     };
 
-    static const Item items[] = {
-        {"⌂   Accueil", false},
-        {"🏢   Gestion de bureau", false},
-        {"⚙   Gestion des équipements", true},
-        {"👷   Gestion des techniciens", false},
-        {"📡   Gestion des stations", false},
-        {"👥   Gestion des utilisateurs", false}
+    const bool active[] = {
+        false, false, true, false, false, false
     };
 
-    for (int i = 0; i < 6; ++i) {
-        QPushButton *b = new QPushButton(QString::fromUtf8(items[i].text));
+    for (int i = 0; i < 6; ++i)
+    {
+        QPushButton *b = new QPushButton(
+            QString::fromUtf8(items[i])
+            );
+
         b->setObjectName("nav");
-        b->setProperty("active", items[i].active);
+        b->setProperty("active", active[i]);
         b->setCursor(Qt::PointingHandCursor);
+
         v->addWidget(b);
     }
 
     v->addStretch();
+
     return side;
 }
 
-/* ------------------------------------------------------------------ */
-/* Header                                                              */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// HEADER
+// ==========================================
 
 QWidget *WeatherWiseTest::buildHeader()
 {
     QFrame *h = new QFrame;
+
     h->setObjectName("header");
     h->setFixedHeight(72);
 
     QHBoxLayout *l = new QHBoxLayout(h);
+
     l->setContentsMargins(34, 6, 34, 6);
 
     QVBoxLayout *tv = new QVBoxLayout;
     tv->setSpacing(0);
 
-    QLabel *t = new QLabel("Gestion des équipements");
+    QLabel *t = new QLabel(
+        "Gestion des équipements"
+        );
+
     t->setObjectName("headerTitle");
 
-    QLabel *s = new QLabel(QString::fromUtf8(
-        "Gérez les équipements météorologiques et leurs informations"));
+    QLabel *s = new QLabel(
+        QString::fromUtf8(
+            "Gérez les équipements météorologiques et leurs informations"
+            )
+        );
+
     s->setObjectName("headerSub");
 
     tv->addStretch();
     tv->addWidget(t);
     tv->addWidget(s);
     tv->addStretch();
+
     l->addLayout(tv);
     l->addStretch();
 
@@ -611,7 +825,10 @@ QWidget *WeatherWiseTest::buildHeader()
     QLabel *dot = new QLabel("•");
     dot->setObjectName("headerInfo");
 
-    QLabel *admin = new QLabel(QString::fromUtf8("Administrateur  ▼"));
+    QLabel *admin = new QLabel(
+        QString::fromUtf8("Administrateur  ▼")
+        );
+
     admin->setObjectName("headerInfo");
 
     l->addWidget(m_dateLabel);
@@ -625,32 +842,53 @@ QWidget *WeatherWiseTest::buildHeader()
     return h;
 }
 
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// HORLOGE
+// ==========================================
 
 void WeatherWiseTest::updateClock()
 {
     const QDateTime now = QDateTime::currentDateTime();
-    m_dateLabel->setText(now.toString("dd/MM/yyyy"));
-    m_timeLabel->setText(now.toString("HH:mm"));
+
+    m_dateLabel->setText(
+        now.toString("dd/MM/yyyy")
+        );
+
+    m_timeLabel->setText(
+        now.toString("HH:mm")
+        );
 }
 
-/* ------------------------------------------------------------------ */
-/* Formulaire                                                          */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// FORMULAIRE
+// ==========================================
 
 QWidget *WeatherWiseTest::buildFormCard()
 {
     QFrame *card = makeCard();
+
     QVBoxLayout *v = new QVBoxLayout(card);
+
     v->setContentsMargins(20, 10, 20, 12);
     v->setSpacing(8);
 
-    v->addWidget(makeCardTitle(
-        QString::fromUtf8("⚙  Informations de l'équipement")));
+    v->addWidget(
+        makeCardTitle(
+            QString::fromUtf8(
+                "⚙  Informations de l'équipement"
+                )
+            )
+        );
 
     m_id = new QLineEdit;
+
     m_id->setPlaceholderText(
-        QString::fromUtf8("Généré automatiquement si vide (ex. E011)"));
+        QString::fromUtf8(
+            "Généré automatiquement si vide (ex. E011)"
+            )
+        );
 
     m_nom = new QLineEdit;
 
@@ -658,15 +896,18 @@ QWidget *WeatherWiseTest::buildFormCard()
     m_loc->addItems(m_geo.villes);
 
     m_date = new QDateEdit(QDate::currentDate());
+
     m_date->setCalendarPopup(true);
     m_date->setDisplayFormat("dd/MM/yyyy");
 
     m_statut = new QComboBox;
+
     m_statut->addItem("Actif");
     m_statut->addItem("Inactif");
     m_statut->addItem("En maintenance");
 
     m_type = new QComboBox;
+
     m_type->addItem("Station météo");
     m_type->addItem("Thermomètre");
     m_type->addItem("Baromètre");
@@ -676,14 +917,13 @@ QWidget *WeatherWiseTest::buildFormCard()
     m_type->addItem("Capteur météo");
 
     QGridLayout *g = new QGridLayout;
+
     g->setHorizontalSpacing(14);
     g->setVerticalSpacing(8);
+
     g->setColumnStretch(1, 1);
     g->setColumnStretch(3, 1);
 
-    /*
-     * Même grille générale que l'ancien formulaire.
-     */
     addField(g, 0, 0, "ID Équipement :", m_id);
     addField(g, 0, 1, "Nom :", m_nom);
     addField(g, 1, 0, "Localisation :", m_loc);
@@ -692,98 +932,168 @@ QWidget *WeatherWiseTest::buildFormCard()
     addField(g, 3, 0, "Type d'équipement :", m_type);
 
     v->addLayout(g);
+
     return card;
 }
 
-/* ------------------------------------------------------------------ */
-/* Toolbar                                                             */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// TOOLBAR
+// ==========================================
 
 QWidget *WeatherWiseTest::buildToolbar()
 {
     QFrame *card = makeCard();
+
     QHBoxLayout *l = new QHBoxLayout(card);
+
     l->setContentsMargins(14, 8, 14, 8);
     l->setSpacing(8);
 
-    QPushButton *bAdd = new QPushButton(QString::fromUtf8("＋  Ajouter"));
+    QPushButton *bAdd = new QPushButton(
+        QString::fromUtf8("＋  Ajouter")
+        );
+
     bAdd->setObjectName("primary");
 
-    QPushButton *bEdit = new QPushButton(QString::fromUtf8("✎  Modifier"));
+    QPushButton *bEdit = new QPushButton(
+        QString::fromUtf8("✎  Modifier")
+        );
 
-    QPushButton *bDel = new QPushButton(QString::fromUtf8("▣  Supprimer"));
+    QPushButton *bDel = new QPushButton(
+        QString::fromUtf8("▣  Supprimer")
+        );
+
     bDel->setObjectName("danger");
 
-    QPushButton *bClear = new QPushButton(QString::fromUtf8("↻  Vider"));
+    QPushButton *bClear = new QPushButton(
+        QString::fromUtf8("↻  Vider")
+        );
 
     l->addWidget(bAdd);
     l->addWidget(bEdit);
     l->addWidget(bDel);
     l->addWidget(bClear);
+
     l->addSpacing(10);
-    l->addWidget(new QLabel(QString::fromUtf8("↕  Trier par")));
+
+    l->addWidget(
+        new QLabel(QString::fromUtf8("↕  Trier par"))
+        );
 
     m_sort = new QComboBox;
+
     m_sort->addItem("Nom");
     m_sort->addItem("Localisation");
     m_sort->addItem("Statut");
     m_sort->addItem("Type");
+
     m_sort->setMinimumWidth(180);
+
     l->addWidget(m_sort);
 
     QPushButton *bSort = new QPushButton("Trier");
+
     l->addWidget(bSort);
 
     m_search = new QLineEdit;
-    m_search->setPlaceholderText(QString::fromUtf8(
-        "Rechercher par ID, nom, localisation, statut, date ou type..."));
+
+    m_search->setPlaceholderText(
+        QString::fromUtf8(
+            "Rechercher par ID, nom, localisation, statut, date ou type..."
+            )
+        );
+
     l->addWidget(m_search, 1);
 
-    QPushButton *bFind = new QPushButton(QString::fromUtf8("🔍"));
+    QPushButton *bFind = new QPushButton(
+        QString::fromUtf8("🔍")
+        );
+
     l->addWidget(bFind);
 
-    QPushButton *bPdf = new QPushButton(QString::fromUtf8("▤  Exporter en PDF"));
+    QPushButton *bPdf = new QPushButton(
+        QString::fromUtf8("▤  Exporter en PDF")
+        );
+
     l->addWidget(bPdf);
 
-    connect(bAdd, SIGNAL(clicked()), this, SLOT(onAdd()));
-    connect(bEdit, SIGNAL(clicked()), this, SLOT(onEdit()));
-    connect(bDel, SIGNAL(clicked()), this, SLOT(onDelete()));
-    connect(bClear, SIGNAL(clicked()), this, SLOT(onClear()));
-    connect(bSort, SIGNAL(clicked()), this, SLOT(onSort()));
-    connect(m_sort, SIGNAL(currentIndexChanged(int)), this, SLOT(onSort()));
-    connect(bFind, SIGNAL(clicked()), this, SLOT(onSearch()));
-    connect(m_search, SIGNAL(returnPressed()), this, SLOT(onSearch()));
-    connect(m_search, SIGNAL(textChanged(QString)), this, SLOT(onSearch()));
-    connect(bPdf, SIGNAL(clicked()), this, SLOT(exportPdf()));
+    connect(bAdd, SIGNAL(clicked()),
+            this, SLOT(onAdd()));
+
+    connect(bEdit, SIGNAL(clicked()),
+            this, SLOT(onEdit()));
+
+    connect(bDel, SIGNAL(clicked()),
+            this, SLOT(onDelete()));
+
+    connect(bClear, SIGNAL(clicked()),
+            this, SLOT(onClear()));
+
+    connect(bSort, SIGNAL(clicked()),
+            this, SLOT(onSort()));
+
+    connect(m_sort, SIGNAL(currentIndexChanged(int)),
+            this, SLOT(onSort()));
+
+    connect(bFind, SIGNAL(clicked()),
+            this, SLOT(onSearch()));
+
+    connect(m_search, SIGNAL(returnPressed()),
+            this, SLOT(onSearch()));
+
+    connect(m_search, SIGNAL(textChanged(QString)),
+            this, SLOT(onSearch()));
+
+    connect(bPdf, SIGNAL(clicked()),
+            this, SLOT(exportPdf()));
 
     return card;
 }
 
-/* ------------------------------------------------------------------ */
-/* Tableau                                                             */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// TABLEAU
+// ==========================================
 
 QWidget *WeatherWiseTest::buildTableCard()
 {
     QFrame *card = makeCard();
+
     QVBoxLayout *v = new QVBoxLayout(card);
+
     v->setContentsMargins(16, 14, 16, 14);
     v->setSpacing(8);
 
     QHBoxLayout *top = new QHBoxLayout;
-    top->addWidget(makeCardTitle(
-        QString::fromUtf8("▤  Liste des équipements")));
+
+    top->addWidget(
+        makeCardTitle(
+            QString::fromUtf8(
+                "▤  Liste des équipements"
+                )
+            )
+        );
+
     top->addStretch();
 
-    QLabel *hint = new QLabel(QString::fromUtf8(
-        "Sélectionnez une ligne pour modifier les informations"));
+    QLabel *hint = new QLabel(
+        QString::fromUtf8(
+            "Sélectionnez une ligne pour modifier les informations"
+            )
+        );
+
     hint->setObjectName("hint");
+
     top->addWidget(hint);
+
     v->addLayout(top);
 
-    m_table = new QTableWidget(0, 7);
+    // Six colonnes pour six informations
+    m_table = new QTableWidget(0, 6);
 
     QStringList headers;
+
     headers << "ID Équipement"
             << "Nom"
             << "Localisation"
@@ -792,120 +1102,204 @@ QWidget *WeatherWiseTest::buildTableCard()
             << "Type d'équipement";
 
     m_table->setHorizontalHeaderLabels(headers);
+
     m_table->verticalHeader()->setDefaultSectionSize(34);
-    m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
-    m_table->setSelectionMode(QAbstractItemView::SingleSelection);
-    m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    m_table->horizontalHeader()->setSectionResizeMode(
+        QHeaderView::Stretch
+        );
+
+    m_table->setSelectionBehavior(
+        QAbstractItemView::SelectRows
+        );
+
+    m_table->setSelectionMode(
+        QAbstractItemView::SingleSelection
+        );
+
+    m_table->setEditTriggers(
+        QAbstractItemView::NoEditTriggers
+        );
+
     m_table->setFocusPolicy(Qt::NoFocus);
     m_table->setMinimumHeight(120);
 
     v->addWidget(m_table, 1);
 
-    connect(m_table, SIGNAL(itemSelectionChanged()),
-            this, SLOT(onRowSelected()));
+    connect(
+        m_table,
+        SIGNAL(itemSelectionChanged()),
+        this,
+        SLOT(onRowSelected())
+        );
 
     return card;
 }
 
-/* ------------------------------------------------------------------ */
-/* Refresh table                                                       */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// ACTUALISER LE TABLEAU
+// ==========================================
 
 void WeatherWiseTest::refreshTable()
 {
     const QString q = m_search->text().trimmed();
+
     QVector<Equipement> list;
 
-    for (int i = 0; i < m_equipements.size(); ++i) {
+    for (int i = 0; i < m_equipements.size(); ++i)
+    {
         const Equipement &e = m_equipements.at(i);
-        const QString date = e.dateInstallation.toString("dd/MM/yyyy");
+
+        const QString date =
+            e.getDateInstallation().toString("dd/MM/yyyy");
 
         bool match =
             q.isEmpty()
-            || e.id.contains(q, Qt::CaseInsensitive)
-            || e.nom.contains(q, Qt::CaseInsensitive)
-            || e.localisation.contains(q, Qt::CaseInsensitive)
-            || e.statut.contains(q, Qt::CaseInsensitive)
+            || e.getId().contains(q, Qt::CaseInsensitive)
+            || e.getNom().contains(q, Qt::CaseInsensitive)
+            || e.getLocalisation().contains(q, Qt::CaseInsensitive)
+            || e.getStatut().contains(q, Qt::CaseInsensitive)
             || date.contains(q, Qt::CaseInsensitive)
-            || e.type.contains(q, Qt::CaseInsensitive);
+            || e.getType().contains(q, Qt::CaseInsensitive);
 
-        if (match) {
+        if (match)
+        {
             list.append(e);
         }
     }
 
-    if (m_sortMode == 0) {
+    if (m_sortMode == 0)
+    {
         std::sort(list.begin(), list.end(), lessNom);
-    } else if (m_sortMode == 1) {
+    }
+    else if (m_sortMode == 1)
+    {
         std::sort(list.begin(), list.end(), lessLocalisation);
-    } else if (m_sortMode == 2) {
+    }
+    else if (m_sortMode == 2)
+    {
         std::sort(list.begin(), list.end(), lessStatut);
-    } else if (m_sortMode == 3) {
+    }
+    else if (m_sortMode == 3)
+    {
         std::sort(list.begin(), list.end(), lessType);
     }
 
     m_table->setRowCount(0);
     m_table->setRowCount(list.size());
 
-    for (int r = 0; r < list.size(); ++r) {
+    for (int r = 0; r < list.size(); ++r)
+    {
         const Equipement &e = list.at(r);
 
-        m_table->setItem(r, 0, new QTableWidgetItem(e.id));
-        m_table->setItem(r, 1, new QTableWidgetItem(e.nom));
-        m_table->setItem(r, 2, new QTableWidgetItem(e.localisation));
+        m_table->setItem(
+            r, 0, new QTableWidgetItem(e.getId())
+            );
+
+        m_table->setItem(
+            r, 1, new QTableWidgetItem(e.getNom())
+            );
+
+        m_table->setItem(
+            r, 2, new QTableWidgetItem(e.getLocalisation())
+            );
+
         m_table->setItem(
             r, 3,
-            new QTableWidgetItem(e.dateInstallation.toString("dd/MM/yyyy")));
+            new QTableWidgetItem(
+                e.getDateInstallation().toString("dd/MM/yyyy")
+                )
+            );
 
-        QTableWidgetItem *st = new QTableWidgetItem(e.statut);
+        QTableWidgetItem *st =
+            new QTableWidgetItem(e.getStatut());
 
-        if (e.statut == "Actif") {
-            st->setForeground(QBrush(QColor("#16a068")));
-        } else if (e.statut == "Inactif") {
-            st->setForeground(QBrush(QColor("#e5474f")));
-        } else {
-            st->setForeground(QBrush(QColor("#f0a000")));
+        if (e.getStatut() == "Actif")
+        {
+            st->setForeground(
+                QBrush(QColor("#16a068"))
+                );
+        }
+        else if (e.getStatut() == "Inactif")
+        {
+            st->setForeground(
+                QBrush(QColor("#e5474f"))
+                );
+        }
+        else
+        {
+            st->setForeground(
+                QBrush(QColor("#f0a000"))
+                );
         }
 
         m_table->setItem(r, 4, st);
-        m_table->setItem(r, 5, new QTableWidgetItem(e.type));
+
+        m_table->setItem(
+            r, 5, new QTableWidgetItem(e.getType())
+            );
     }
 
     updateStats();
+
     m_map->setEquipements(m_equipements);
 }
 
-/* ------------------------------------------------------------------ */
-/* Statistiques                                                        */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// STATISTIQUES
+// ==========================================
 
 QWidget *WeatherWiseTest::buildStatsCard()
 {
     QFrame *card = makeCard();
+
     QVBoxLayout *v = new QVBoxLayout(card);
+
     v->setContentsMargins(16, 10, 16, 10);
     v->setSpacing(6);
 
-    v->addWidget(makeCardTitle(
-        QString::fromUtf8("📊  Statistiques des équipements")));
+    v->addWidget(
+        makeCardTitle(
+            QString::fromUtf8(
+                "📊  Statistiques des équipements"
+                )
+            )
+        );
 
     m_donut = new EquipementDonutChart;
 
-    QLabel *dotA = new QLabel(QString::fromUtf8("●"));
-    dotA->setStyleSheet("color:#16a068; background:transparent;");
+    QLabel *dotA = new QLabel(
+        QString::fromUtf8("●")
+        );
 
-    QLabel *dotI = new QLabel(QString::fromUtf8("●"));
-    dotI->setStyleSheet("color:#e5474f; background:transparent;");
+    dotA->setStyleSheet(
+        "color:#16a068; background:transparent;"
+        );
 
-    QLabel *dotM = new QLabel(QString::fromUtf8("●"));
-    dotM->setStyleSheet("color:#f0a000; background:transparent;");
+    QLabel *dotI = new QLabel(
+        QString::fromUtf8("●")
+        );
+
+    dotI->setStyleSheet(
+        "color:#e5474f; background:transparent;"
+        );
+
+    QLabel *dotM = new QLabel(
+        QString::fromUtf8("●")
+        );
+
+    dotM->setStyleSheet(
+        "color:#f0a000; background:transparent;"
+        );
 
     m_actifsLabel = new QLabel;
     m_inactifsLabel = new QLabel;
     m_maintenanceLabel = new QLabel;
 
     QGridLayout *lg = new QGridLayout;
+
     lg->setHorizontalSpacing(10);
     lg->setVerticalSpacing(8);
 
@@ -922,14 +1316,19 @@ QWidget *WeatherWiseTest::buildStatsCard()
     lg->addWidget(m_maintenanceLabel, 2, 2);
 
     QHBoxLayout *body = new QHBoxLayout;
+
     body->addWidget(m_donut, 1);
     body->addLayout(lg);
 
     v->addLayout(body, 1);
+
     return card;
 }
 
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// ACTUALISER LES STATISTIQUES
+// ==========================================
 
 void WeatherWiseTest::updateStats()
 {
@@ -937,321 +1336,463 @@ void WeatherWiseTest::updateStats()
     int inactifs = 0;
     int maintenance = 0;
 
-    for (int k = 0; k < m_equipements.size(); ++k) {
+    for (int k = 0; k < m_equipements.size(); ++k)
+    {
         const Equipement &e = m_equipements.at(k);
 
-        if (e.statut == "Actif") {
+        if (e.getStatut() == "Actif")
+        {
             ++actifs;
-        } else if (e.statut == "Inactif") {
+        }
+        else if (e.getStatut() == "Inactif")
+        {
             ++inactifs;
-        } else {
+        }
+        else
+        {
             ++maintenance;
         }
     }
 
     const int total = actifs + inactifs + maintenance;
 
-    /*
-     * Le donut conserve le même fonctionnement
-     * visuel que l'ancienne version :
-     * actifs / non-actifs.
-     */
-    m_donut->setValues(actifs, inactifs + maintenance);
+    m_donut->setValues(
+        actifs,
+        inactifs + maintenance
+        );
 
     m_actifsLabel->setText(
         QString("%1 (%2%)")
             .arg(actifs)
-            .arg(total ? qRound(100.0 * actifs / total) : 0));
+            .arg(total ? qRound(100.0 * actifs / total) : 0)
+        );
 
     m_inactifsLabel->setText(
         QString("%1 (%2%)")
             .arg(inactifs)
-            .arg(total ? qRound(100.0 * inactifs / total) : 0));
+            .arg(total ? qRound(100.0 * inactifs / total) : 0)
+        );
 
     m_maintenanceLabel->setText(
         QString("%1 (%2%)")
             .arg(maintenance)
-            .arg(total ? qRound(100.0 * maintenance / total) : 0));
+            .arg(total ? qRound(100.0 * maintenance / total) : 0)
+        );
 }
 
-/* ------------------------------------------------------------------ */
-/* Carte                                                               */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// CARTE GEOGRAPHIQUE
+// ==========================================
 
 QWidget *WeatherWiseTest::buildMapCard()
 {
     QFrame *card = makeCard();
+
     QVBoxLayout *v = new QVBoxLayout(card);
+
     v->setContentsMargins(14, 12, 14, 14);
 
     QLabel *mt = makeCardTitle(
-        QString::fromUtf8("📍  Localisation géographique – ")
-        + m_geo.nom + m_geoNote);
+        QString::fromUtf8(
+            "📍  Localisation géographique – "
+            ) + m_geo.nom + m_geoNote
+        );
 
     mt->setWordWrap(true);
+
     v->addWidget(mt);
 
     m_map = new EquipementMapWidget;
+
     m_map->setCountry(m_geo);
+
     v->addWidget(m_map, 1);
 
     return card;
 }
 
-/* ------------------------------------------------------------------ */
-/* Lecture formulaire                                                  */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// LIRE LE FORMULAIRE
+// ==========================================
 
 bool WeatherWiseTest::readForm(Equipement &e)
 {
     const QString nom = m_nom->text().trimmed();
 
-    if (nom.isEmpty()) {
+    if (nom.isEmpty())
+    {
         QMessageBox::warning(
             this,
             "Champs obligatoires",
-            QString::fromUtf8("Le nom de l'équipement est obligatoire."));
+            QString::fromUtf8(
+                "Le nom de l'équipement est obligatoire."
+                )
+            );
+
         return false;
     }
 
-    e.nom = nom;
-    e.localisation = m_loc->currentText();
-    e.dateInstallation = m_date->date();
-    e.statut = m_statut->currentText();
-    e.type = m_type->currentText();
+    e.setNom(nom);
+    e.setLocalisation(m_loc->currentText());
+    e.setDateInstallation(m_date->date());
+    e.setStatut(m_statut->currentText());
+    e.setType(m_type->currentText());
 
     return true;
 }
 
-/* ------------------------------------------------------------------ */
-/* Ajouter                                                             */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// AJOUTER
+// ==========================================
 
 void WeatherWiseTest::onAdd()
 {
     Equipement e;
 
-    if (!readForm(e)) {
+    if (!readForm(e))
+    {
         return;
     }
 
     QString id = m_id->text().trimmed().toUpper();
-    if (id.isEmpty()) {
+
+    if (id.isEmpty())
+    {
         id = nextId();
     }
 
-    for (int i = 0; i < m_equipements.size(); ++i) {
-        if (m_equipements.at(i).id == id) {
+    for (int i = 0; i < m_equipements.size(); ++i)
+    {
+        if (m_equipements.at(i).getId() == id)
+        {
             QMessageBox::warning(
-                this, "ID existant",
-                QString::fromUtf8("Un équipement avec l'ID %1 existe déjà.").arg(id));
+                this,
+                "ID existant",
+                QString::fromUtf8(
+                    "Un équipement avec l'ID %1 existe déjà."
+                    ).arg(id)
+                );
+
             return;
         }
     }
 
-    // Insérer dans Oracle AVANT de modifier la liste affichée.
     EquipementDAO dao;
-    if (!dao.ajouter(id, e.nom, e.localisation, e.statut,
-                     e.dateInstallation, e.type)) {
+
+    if (!dao.ajouter(
+            id,
+            e.getNom(),
+            e.getLocalisation(),
+            e.getStatut(),
+            e.getDateInstallation(),
+            e.getType()))
+    {
         QMessageBox::critical(
-            this, "Erreur d'insertion Oracle",
-            QString::fromUtf8("L'équipement n'a pas été enregistré dans Oracle.\n"
-                              "Vérifiez Application Output pour le détail de l'erreur."));
+            this,
+            "Erreur d'insertion Oracle",
+            QString::fromUtf8(
+                "L'équipement n'a pas été enregistré dans Oracle.\n"
+                "Vérifiez Application Output pour le détail de l'erreur."
+                )
+            );
+
         return;
     }
 
-    e.id = id;
+    e.setId(id);
+
     m_equipements.append(e);
+
     onClear();
     refreshTable();
 
-    QMessageBox::information(this, "Succès",
-                             QString::fromUtf8("Équipement enregistré dans Oracle."));
+    QMessageBox::information(
+        this,
+        "Succès",
+        QString::fromUtf8(
+            "Équipement enregistré dans Oracle."
+            )
+        );
 }
 
-/* ------------------------------------------------------------------ */
-/* Modifier                                                            */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// MODIFIER
+// ==========================================
 
 void WeatherWiseTest::onEdit()
 {
-    if (m_editId.isEmpty()) {
+    if (m_editId.isEmpty())
+    {
         QMessageBox::information(
-            this, "Modifier",
-            QString::fromUtf8("Sélectionnez d'abord une ligne dans la liste."));
+            this,
+            "Modifier",
+            QString::fromUtf8(
+                "Sélectionnez d'abord une ligne dans la liste."
+                )
+            );
+
         return;
     }
 
     Equipement ne;
-    if (!readForm(ne)) {
+
+    if (!readForm(ne))
+    {
         return;
     }
-    ne.id = m_editId;
 
-    // Mettre à jour Oracle avant de mettre à jour l'interface.
+    ne.setId(m_editId);
+
     EquipementDAO dao;
-    if (!dao.modifier(ne.id, ne.nom, ne.localisation, ne.statut,
-                      ne.dateInstallation, ne.type)) {
+
+    if (!dao.modifier(
+            ne.getId(),
+            ne.getNom(),
+            ne.getLocalisation(),
+            ne.getStatut(),
+            ne.getDateInstallation(),
+            ne.getType()))
+    {
         QMessageBox::critical(
-            this, "Erreur de modification Oracle",
-            QString::fromUtf8("La modification n'a pas été confirmée dans Oracle.\n"
-                              "Vérifiez que l'ID existe et consultez Application Output."));
+            this,
+            "Erreur de modification Oracle",
+            QString::fromUtf8(
+                "La modification n'a pas été confirmée dans Oracle.\n"
+                "Vérifiez que l'ID existe et consultez Application Output."
+                )
+            );
+
         return;
     }
 
     bool found = false;
-    for (int i = 0; i < m_equipements.size(); ++i) {
-        if (m_equipements.at(i).id == m_editId) {
+
+    for (int i = 0; i < m_equipements.size(); ++i)
+    {
+        if (m_equipements.at(i).getId() == m_editId)
+        {
             m_equipements[i] = ne;
             found = true;
             break;
         }
     }
-    if (!found) {
+
+    if (!found)
+    {
         m_equipements.append(ne);
     }
 
     onClear();
     refreshTable();
-    QMessageBox::information(this, "Succès",
-                             QString::fromUtf8("Équipement modifié dans Oracle."));
+
+    QMessageBox::information(
+        this,
+        "Succès",
+        QString::fromUtf8(
+            "Équipement modifié dans Oracle."
+            )
+        );
 }
 
-/* ------------------------------------------------------------------ */
-/* Supprimer                                                           */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// SUPPRIMER
+// ==========================================
 
 void WeatherWiseTest::onDelete()
 {
-    if (m_editId.isEmpty()) {
+    if (m_editId.isEmpty())
+    {
         QMessageBox::information(
             this,
             "Supprimer",
             QString::fromUtf8(
-                "Sélectionnez d'abord une ligne dans la liste."));
+                "Sélectionnez d'abord une ligne dans la liste."
+                )
+            );
+
         return;
     }
 
-    const QMessageBox::StandardButton rep = QMessageBox::question(
-        this,
-        "Confirmation",
-        QString::fromUtf8("Supprimer l'équipement %1 ?").arg(m_editId));
+    const QMessageBox::StandardButton rep =
+        QMessageBox::question(
+            this,
+            "Confirmation",
+            QString::fromUtf8(
+                "Supprimer l'équipement %1 ?"
+                ).arg(m_editId)
+            );
 
-    if (rep != QMessageBox::Yes) {
+    if (rep != QMessageBox::Yes)
+    {
         return;
     }
 
-    // Supprimer dans Oracle avant de retirer la ligne de l'interface.
     EquipementDAO dao;
-    if (!dao.supprimer(m_editId)) {
+
+    if (!dao.supprimer(m_editId))
+    {
         QMessageBox::critical(
-            this, "Erreur de suppression Oracle",
-            QString::fromUtf8("La suppression n'a pas été confirmée dans Oracle.\n"
-                              "Vérifiez que l'ID existe et consultez Application Output."));
+            this,
+            "Erreur de suppression Oracle",
+            QString::fromUtf8(
+                "La suppression n'a pas été confirmée dans Oracle.\n"
+                "Vérifiez que l'ID existe et consultez Application Output."
+                )
+            );
+
         return;
     }
 
-    for (int i = m_equipements.size() - 1; i >= 0; --i) {
-        if (m_equipements.at(i).id == m_editId) {
+    for (int i = m_equipements.size() - 1; i >= 0; --i)
+    {
+        if (m_equipements.at(i).getId() == m_editId)
+        {
             m_equipements.remove(i);
         }
     }
 
     onClear();
     refreshTable();
-    QMessageBox::information(this, "Succès",
-                             QString::fromUtf8("Équipement supprimé d'Oracle."));
+
+    QMessageBox::information(
+        this,
+        "Succès",
+        QString::fromUtf8(
+            "Équipement supprimé d'Oracle."
+            )
+        );
 }
 
-/* ------------------------------------------------------------------ */
-/* Vider                                                               */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// VIDER
+// ==========================================
 
 void WeatherWiseTest::onClear()
 {
     m_editId.clear();
+
     m_id->clear();
     m_id->setReadOnly(false);
+
     m_nom->clear();
+
     m_loc->setCurrentIndex(0);
+
     m_date->setDate(QDate::currentDate());
+
     m_statut->setCurrentIndex(0);
+
     m_type->setCurrentIndex(0);
+
     m_table->clearSelection();
 }
 
-/* ------------------------------------------------------------------ */
-/* Tri                                                                 */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// TRI
+// ==========================================
 
 void WeatherWiseTest::onSort()
 {
     m_sortMode = m_sort->currentIndex();
+
     refreshTable();
 }
 
-/* ------------------------------------------------------------------ */
-/* Recherche                                                           */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// RECHERCHE
+// ==========================================
 
 void WeatherWiseTest::onSearch()
 {
     refreshTable();
 }
 
-/* ------------------------------------------------------------------ */
-/* Sélection ligne                                                     */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// SELECTION D'UNE LIGNE
+// ==========================================
 
 void WeatherWiseTest::onRowSelected()
 {
-    const QList<QTableWidgetItem *> sel = m_table->selectedItems();
+    const QList<QTableWidgetItem *> sel =
+        m_table->selectedItems();
 
-    if (sel.isEmpty()) {
+    if (sel.isEmpty())
+    {
         return;
     }
 
-    QTableWidgetItem *first = m_table->item(sel.first()->row(), 0);
+    QTableWidgetItem *first =
+        m_table->item(sel.first()->row(), 0);
 
-    if (!first) {
+    if (!first)
+    {
         return;
     }
 
     const QString id = first->text();
 
-    for (int i = 0; i < m_equipements.size(); ++i) {
+    for (int i = 0; i < m_equipements.size(); ++i)
+    {
         const Equipement &e = m_equipements.at(i);
 
-        if (e.id != id) {
+        if (e.getId() != id)
+        {
             continue;
         }
 
         m_editId = id;
-        m_id->setText(e.id);
+
+        m_id->setText(e.getId());
         m_id->setReadOnly(true);
-        m_nom->setText(e.nom);
-        m_loc->setCurrentText(e.localisation);
-        m_date->setDate(e.dateInstallation);
-        m_statut->setCurrentText(e.statut);
-        m_type->setCurrentText(e.type);
+
+        m_nom->setText(e.getNom());
+
+        m_loc->setCurrentText(
+            e.getLocalisation()
+            );
+
+        m_date->setDate(
+            e.getDateInstallation()
+            );
+
+        m_statut->setCurrentText(
+            e.getStatut()
+            );
+
+        m_type->setCurrentText(
+            e.getType()
+            );
 
         return;
     }
 }
 
-/* ------------------------------------------------------------------ */
-/* Export PDF                                                          */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// EXPORT PDF
+// ==========================================
 
 void WeatherWiseTest::exportPdf()
 {
-    const QString path = QFileDialog::getSaveFileName(
-        this,
-        "Exporter en PDF",
-        "equipements.pdf",
-        "PDF (*.pdf)");
+    const QString path =
+        QFileDialog::getSaveFileName(
+            this,
+            "Exporter en PDF",
+            "equipements.pdf",
+            "PDF (*.pdf)"
+            );
 
-    if (path.isEmpty()) {
+    if (path.isEmpty())
+    {
         return;
     }
 
@@ -1270,9 +1811,11 @@ void WeatherWiseTest::exportPdf()
         "<th>Date d'installation</th>"
         "<th>Statut</th>"
         "<th>Type</th>"
-        "</tr>");
+        "</tr>"
+        );
 
-    for (int i = 0; i < m_equipements.size(); ++i) {
+    for (int i = 0; i < m_equipements.size(); ++i)
+    {
         const Equipement &e = m_equipements.at(i);
 
         html += QString(
@@ -1283,34 +1826,46 @@ void WeatherWiseTest::exportPdf()
                     "<td>%4</td>"
                     "<td>%5</td>"
                     "<td>%6</td>"
-                    "</tr>")
-                    .arg(e.id)
-                    .arg(e.nom)
-                    .arg(e.localisation)
-                    .arg(e.dateInstallation.toString("dd/MM/yyyy"))
-                    .arg(e.statut)
-                    .arg(e.type);
+                    "</tr>"
+                    )
+                    .arg(e.getId().toHtmlEscaped())
+                    .arg(e.getNom().toHtmlEscaped())
+                    .arg(e.getLocalisation().toHtmlEscaped())
+                    .arg(e.getDateInstallation().toString("dd/MM/yyyy"))
+                    .arg(e.getStatut().toHtmlEscaped())
+                    .arg(e.getType().toHtmlEscaped());
     }
 
     html += "</table>";
 
     QPdfWriter writer(path);
-    writer.setPageSize(QPageSize(QPageSize::A4));
-    writer.setPageOrientation(QPageLayout::Landscape);
+
+    writer.setPageSize(
+        QPageSize(QPageSize::A4)
+        );
+
+    writer.setPageOrientation(
+        QPageLayout::Landscape
+        );
 
     QTextDocument doc;
+
     doc.setHtml(html);
     doc.print(&writer);
 
     QMessageBox::information(
         this,
         "Export",
-        QString::fromUtf8("PDF exporté avec succès :\n") + path);
+        QString::fromUtf8(
+            "PDF exporté avec succès :\n"
+            ) + path
+        );
 }
 
-/* ------------------------------------------------------------------ */
-/* Style                                                               */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// STYLE
+// ==========================================
 
 QString WeatherWiseTest::styleSheet()
 {

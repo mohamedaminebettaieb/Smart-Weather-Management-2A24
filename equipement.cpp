@@ -1,17 +1,130 @@
+
 #include "equipement.h"
+
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QSqlRecord>
 #include <QDebug>
 
-    bool EquipementDAO::ajouter(const QString &id,
-                                const QString &nom,
-                                const QString &localisation,
-                                const QString &statut,
-                                const QDate &dateInstallation,
-                                const QString &type)
+// ==========================================
+// CLASSE EQUIPEMENT
+// ==========================================
+
+// Constructeur par defaut
+Equipement::Equipement()
+{
+    id = "";
+    nom = "";
+    localisation = "";
+    statut = "";
+    dateInstallation = QDate();
+    type = "";
+}
+
+// Constructeur parametre
+Equipement::Equipement(const QString &id,
+                       const QString &nom,
+                       const QString &localisation,
+                       const QString &statut,
+                       const QDate &dateInstallation,
+                       const QString &type)
+{
+    this->id = id;
+    this->nom = nom;
+    this->localisation = localisation;
+    this->statut = statut;
+    this->dateInstallation = dateInstallation;
+    this->type = type;
+}
+
+// Getters
+QString Equipement::getId() const
+{
+    return id;
+}
+
+QString Equipement::getNom() const
+{
+    return nom;
+}
+
+QString Equipement::getLocalisation() const
+{
+    return localisation;
+}
+
+QString Equipement::getStatut() const
+{
+    return statut;
+}
+
+QDate Equipement::getDateInstallation() const
+{
+    return dateInstallation;
+}
+
+QString Equipement::getType() const
+{
+    return type;
+}
+
+// Setters
+void Equipement::setId(const QString &id)
+{
+    this->id = id;
+}
+
+void Equipement::setNom(const QString &nom)
+{
+    this->nom = nom;
+}
+
+void Equipement::setLocalisation(const QString &localisation)
+{
+    this->localisation = localisation;
+}
+
+void Equipement::setStatut(const QString &statut)
+{
+    this->statut = statut;
+}
+
+void Equipement::setDateInstallation(const QDate &dateInstallation)
+{
+    this->dateInstallation = dateInstallation;
+}
+
+void Equipement::setType(const QString &type)
+{
+    this->type = type;
+}
+
+// Affichage
+void Equipement::afficher() const
+{
+    qDebug() << "ID :" << id;
+    qDebug() << "Nom :" << nom;
+    qDebug() << "Localisation :" << localisation;
+    qDebug() << "Statut :" << statut;
+    qDebug() << "Date d'installation :" << dateInstallation;
+    qDebug() << "Type :" << type;
+}
+
+
+// ==========================================
+// CLASSE EQUIPEMENTDAO
+// ==========================================
+
+// Ajouter un equipement
+bool EquipementDAO::ajouter(const QString &id,
+                            const QString &nom,
+                            const QString &localisation,
+                            const QString &statut,
+                            const QDate &dateInstallation,
+                            const QString &type)
 {
     qDebug() << "AJOUTER() CALLED";
+
     QSqlQuery query;
 
     query.prepare(
@@ -28,16 +141,20 @@
     query.bindValue(":dateInstallation", dateInstallation);
     query.bindValue(":type", type);
 
-    if (!query.exec()) {
+    if (!query.exec())
+    {
         qDebug() << "Erreur ajout équipement:"
                  << query.lastError().text();
         return false;
     }
 
     qDebug() << "Equipement insere avec succes dans Oracle!";
+
     return true;
 }
 
+
+// Afficher les equipements
 QSqlQueryModel *EquipementDAO::afficher()
 {
     QSqlQueryModel *model = new QSqlQueryModel();
@@ -48,7 +165,8 @@ QSqlQueryModel *EquipementDAO::afficher()
         "FROM EQUIPEMENTS"
         );
 
-    if (model->lastError().isValid()) {
+    if (model->lastError().isValid())
+    {
         qDebug() << "Erreur affichage équipements:"
                  << model->lastError().text();
     }
@@ -63,6 +181,8 @@ QSqlQueryModel *EquipementDAO::afficher()
     return model;
 }
 
+
+// Modifier un equipement
 bool EquipementDAO::modifier(const QString &id,
                              const QString &nom,
                              const QString &localisation,
@@ -89,7 +209,8 @@ bool EquipementDAO::modifier(const QString &id,
     query.bindValue(":dateInstallation", dateInstallation);
     query.bindValue(":type", type);
 
-    if (!query.exec()) {
+    if (!query.exec())
+    {
         qDebug() << "Erreur modification équipement:"
                  << query.lastError().text();
         return false;
@@ -98,6 +219,8 @@ bool EquipementDAO::modifier(const QString &id,
     return query.numRowsAffected() > 0;
 }
 
+
+// Supprimer un equipement
 bool EquipementDAO::supprimer(const QString &id)
 {
     QSqlQuery query;
@@ -108,7 +231,8 @@ bool EquipementDAO::supprimer(const QString &id)
 
     query.bindValue(":id", id);
 
-    if (!query.exec()) {
+    if (!query.exec())
+    {
         qDebug() << "Erreur suppression équipement:"
                  << query.lastError().text();
         return false;

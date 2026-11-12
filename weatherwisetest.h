@@ -1,3 +1,4 @@
+
 #ifndef WEATHERWISETEST_H
 #define WEATHERWISETEST_H
 
@@ -14,6 +15,12 @@
 #include <QDate>
 #include <QLocale>
 #include <QtMath>
+#include <QColor>
+#include <QRectF>
+#include <QFont>
+#include <QPaintEvent>
+
+#include "equipement.h"
 
 class QTableWidget;
 class QLineEdit;
@@ -22,36 +29,20 @@ class QDateEdit;
 class QLabel;
 class QPushButton;
 
-/* ------------------------------------------------------------------ */
-/* Structure de données : Equipement                                  */
-/* ------------------------------------------------------------------ */
 
-struct Equipement
+// ==========================================
+// CLASSE DONNEES GEOGRAPHIQUES
+// ==========================================
+
+class EquipementCountryGeo
 {
-    QString id;
-    QString nom;
-    QString localisation;
-    QDate dateInstallation;
-    QString statut;
-    QString type;
-
-    QString description() const
-    {
-        return nom + " - " + localisation;
-    }
-};
-
-/* ------------------------------------------------------------------ */
-/* Données géographiques                                               */
-/* ------------------------------------------------------------------ */
-
-struct EquipementCountryGeo
-{
+public:
     QString nom;
     QVector<QPointF> contour;
     QStringList villes;
     QHash<QString, QPointF> coord;
 
+    // Ajouter une ville avec ses coordonnees
     void addVille(const QString &n, double lat, double lon)
     {
         villes << n;
@@ -59,9 +50,10 @@ struct EquipementCountryGeo
     }
 };
 
-/* ------------------------------------------------------------------ */
-/* Graphique en anneau                                                 */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// CLASSE GRAPHIQUE EN ANNEAU
+// ==========================================
 
 class EquipementDonutChart : public QWidget
 {
@@ -82,6 +74,7 @@ public:
     }
 
 protected:
+
     void paintEvent(QPaintEvent *) Q_DECL_OVERRIDE
     {
         QPainter p(this);
@@ -125,8 +118,7 @@ protected:
                     360.0 * 16.0 * m_actifs / total
                     );
 
-            const int spanI =
-                -360 * 16 - spanA;
+            const int spanI = -360 * 16 - spanA;
 
             pen.setColor(QColor("#16a068"));
             p.setPen(pen);
@@ -179,17 +171,20 @@ protected:
     }
 
 private:
+
     int m_actifs;
     int m_inactifs;
 };
 
-/* ------------------------------------------------------------------ */
-/* Carte géographique                                                  */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// CLASSE CARTE GEOGRAPHIQUE
+// ==========================================
 
 class EquipementMapWidget : public QWidget
 {
 public:
+
     explicit EquipementMapWidget(QWidget *parent = 0)
         : QWidget(parent)
     {
@@ -209,6 +204,7 @@ public:
     }
 
 protected:
+
     void paintEvent(QPaintEvent *) Q_DECL_OVERRIDE
     {
         QPainter p(this);
@@ -244,11 +240,8 @@ protected:
                     )
                 );
 
-        const double wSpan =
-            (lonMax - lonMin) * kx;
-
-        const double hSpan =
-            latMax - latMin;
+        const double wSpan = (lonMax - lonMin) * kx;
+        const double hSpan = latMax - latMin;
 
         const double scale =
             qMin(
@@ -262,14 +255,9 @@ protected:
         const double offY =
             (height() - scale * hSpan) / 2.0;
 
-        /*
-         * Projection latitude / longitude
-         */
         const double currentScale = scale;
 
-        /*
-         * Fonction de projection compatible C++11
-         */
+        // Projection latitude / longitude
         auto proj =
             [=](double lat, double lon) -> QPointF
         {
@@ -285,13 +273,12 @@ protected:
                 );
         };
 
-        /* Territoire */
+        // Territoire
         QPolygonF land;
 
         for (int i = 0; i < m_geo.contour.size(); ++i)
         {
-            const QPointF pt =
-                m_geo.contour.at(i);
+            const QPointF pt = m_geo.contour.at(i);
 
             land <<
                 proj(
@@ -307,13 +294,11 @@ protected:
                 )
             );
 
-        p.setBrush(
-            QColor("#f3f0e6")
-            );
+        p.setBrush(QColor("#f3f0e6"));
 
         p.drawPolygon(land);
 
-        /* Equipements */
+        // Equipements
         QFont f = font();
         f.setPointSize(8);
         p.setFont(f);
@@ -322,15 +307,14 @@ protected:
              i < m_equipements.size();
              ++i)
         {
-            const Equipement &e =
-                m_equipements.at(i);
+            const Equipement &e = m_equipements.at(i);
 
-            if (!m_geo.coord.contains(e.localisation))
+            if (!m_geo.coord.contains(e.getLocalisation()))
                 continue;
 
             const QPointF ll =
                 m_geo.coord.value(
-                    e.localisation
+                    e.getLocalisation()
                     );
 
             QPointF pos =
@@ -341,9 +325,9 @@ protected:
 
             QColor markerColor;
 
-            if (e.statut == "Actif")
+            if (e.getStatut() == "Actif")
                 markerColor = QColor("#16a068");
-            else if (e.statut == "Inactif")
+            else if (e.getStatut() == "Inactif")
                 markerColor = QColor("#e5474f");
             else
                 markerColor = QColor("#f0a000");
@@ -363,17 +347,15 @@ protected:
                 7
                 );
 
-            p.setPen(
-                QColor("#334155")
-                );
+            p.setPen(QColor("#334155"));
 
             p.drawText(
                 pos + QPointF(10, 4),
-                e.localisation
+                e.getLocalisation()
                 );
         }
 
-        /* Nom du pays */
+        // Nom du pays
         QFont fn = font();
         fn.setPointSize(14);
         fn.setBold(true);
@@ -391,7 +373,7 @@ protected:
             m_geo.nom.toUpper()
             );
 
-        /* Légende */
+        // Legende
         QRectF leg(
             width() - 145,
             8,
@@ -415,9 +397,7 @@ protected:
 
         p.setPen(Qt::NoPen);
 
-        p.setBrush(
-            QColor("#16a068")
-            );
+        p.setBrush(QColor("#16a068"));
 
         p.drawEllipse(
             QPointF(
@@ -428,9 +408,7 @@ protected:
             5
             );
 
-        p.setBrush(
-            QColor("#e5474f")
-            );
+        p.setBrush(QColor("#e5474f"));
 
         p.drawEllipse(
             QPointF(
@@ -441,9 +419,7 @@ protected:
             5
             );
 
-        p.setBrush(
-            QColor("#f0a000")
-            );
+        p.setBrush(QColor("#f0a000"));
 
         p.drawEllipse(
             QPointF(
@@ -458,9 +434,7 @@ protected:
         fl.setPointSize(8);
         p.setFont(fl);
 
-        p.setPen(
-            QColor("#334155")
-            );
+        p.setPen(QColor("#334155"));
 
         p.drawText(
             QPointF(
@@ -488,19 +462,22 @@ protected:
     }
 
 private:
+
     EquipementCountryGeo m_geo;
     QVector<Equipement> m_equipements;
 };
 
-/* ------------------------------------------------------------------ */
-/* Fenêtre principale                                                  */
-/* ------------------------------------------------------------------ */
+
+// ==========================================
+// CLASSE FENETRE PRINCIPALE
+// ==========================================
 
 class WeatherWiseTest : public QMainWindow
 {
     Q_OBJECT
 
 public:
+
     explicit WeatherWiseTest(QWidget *parent = 0);
 
 private slots:
@@ -521,7 +498,7 @@ private slots:
 
 private:
 
-    /* Interface */
+    // Interface
     QWidget *buildSidebar();
     QWidget *buildHeader();
     QWidget *buildFormCard();
@@ -532,7 +509,7 @@ private:
 
     static QString styleSheet();
 
-    /* Logique */
+    // Logique
     void detectCountry();
     void loadSampleData();
     void refreshTable();
@@ -561,7 +538,7 @@ private:
 
     QString m_geoNote;
 
-    /* Widgets */
+    // Widgets
 
     QTableWidget *m_table;
 
@@ -580,7 +557,7 @@ private:
     QLabel *m_dateLabel;
     QLabel *m_timeLabel;
 
-    /* Formulaire */
+    // Formulaire
 
     QLineEdit *m_id;
     QLineEdit *m_nom;
