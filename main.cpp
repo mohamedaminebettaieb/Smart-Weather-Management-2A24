@@ -1,4 +1,5 @@
 #include <QApplication>
+#include <QMessageBox>
 #include <QMainWindow>
 #include <QPushButton>
 #include <QList>
@@ -15,12 +16,17 @@
 #include "gutilisateur.h"
 #include "connection.h"
 
+<<<<<<< HEAD
 // Navigate between modules inside ONE main application window
 static void connecterNavigation(
     QMainWindow *from,
     QStackedWidget *pages,
     QWidget *toPage,
     const QString &motCle)
+=======
+// Switch from one module window to another
+static void basculerFenetre(QMainWindow *from, QMainWindow *to)
+>>>>>>> origin/crudbureau
 {
     if (from == nullptr || pages == nullptr || toPage == nullptr)
         return;
@@ -47,6 +53,13 @@ int main(int argc, char *argv[])
 
     QApplication::setStyle("Fusion");
     QApplication::setApplicationName("Smart Weather Management");
+    Connection& connection = Connection::createInstance();
+    if(!connection.createConnection())
+    {
+        //QMessageBox::critical(nullptr, "Erreur de connexion", "Impossible de se connecter à la base de données.\n", "Vérifiez la source ODBC, le nom d'utilisateur et le mot de passe.", QMessageBox::Ok);
+        return -1;
+    }
+    QMessageBox::information(nullptr, "Information", "Connexion à la base de données réussie.", QMessageBox::Ok);
 
     // Oracle connection using the existing Singleton
     Connection& connexion = Connection::createInstance();
@@ -156,11 +169,22 @@ int main(int argc, char *argv[])
     connecterNavigation(fenetreUtilisateurs, pages,
                         fenetreEquipements, "Équipements");
 
+<<<<<<< HEAD
     // Start with the existing login screen
     pages->setCurrentWidget(fenetreUtilisateurs);
 
     // Display the single application window
     fenetrePrincipale.show();
+=======
+    // Start with the Techniciens module
+    fenetreUtilisateurs.show();
+
+    if (!Connection::createInstance().createConnection()) {
+        QMessageBox::critical(nullptr, "Erreur", "Connexion à la base impossible.");
+        return 1;
+    }
+    GBureaux w;
+>>>>>>> origin/crudbureau
 
     return app.exec();
 }

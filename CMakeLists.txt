@@ -37,6 +37,9 @@ qt_add_executable(SmartWeatherManagement
 
     equipement.h
     equipement.cpp
+
+    bureau.h
+    bureau.cpp
 )
 
 target_link_libraries(SmartWeatherManagement
