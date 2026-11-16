@@ -2,6 +2,7 @@
 #define TECHNICIENNE_H
 
 #include <QMainWindow>
+#include <QWidget>
 #include <QLineEdit>
 #include <QComboBox>
 #include <QSpinBox>
@@ -10,27 +11,21 @@
 #include <QPushButton>
 #include <QTableWidget>
 #include <QLabel>
-#include <QPainter>
-#include <QMouseEvent>
-#include <QFileDialog>
-#include <QMessageBox>
-#include <QHeaderView>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QGridLayout>
-#include <QFrame>
 #include <QGroupBox>
-#include <QDate>
-#include <QFile>
-#include <QTextStream>
-#include <QInputDialog>
+#include <QString>
+#include "technicien.h"
 
-class StatisticsWidget : public QWidget
+/*
+ * Widget de statistiques des techniciens (diagramme circulaire).
+ * Renommé TechStatisticsWidget pour éviter tout conflit avec la classe
+ * StatisticsWidget du module "Gestion des stations".
+ */
+class TechStatisticsWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit StatisticsWidget(QWidget *parent = nullptr);
+    explicit TechStatisticsWidget(QWidget *parent = nullptr);
 
     void setStatistics(int actifs, int inactifs);
 
@@ -38,8 +33,8 @@ protected:
     void paintEvent(QPaintEvent *event) override;
 
 private:
-    int actifs;
-    int inactifs;
+    int m_actifs;
+    int m_inactifs;
 };
 
 class Technicienne : public QMainWindow
@@ -48,7 +43,11 @@ class Technicienne : public QMainWindow
 
 public:
     explicit Technicienne(QWidget *parent = nullptr);
-    ~Technicienne();
+    ~Technicienne() override;
+
+signals:
+    // Émis lorsque l'utilisateur clique sur "Gestion des stations"
+    void stationsRequested();
 
 private:
 
@@ -59,7 +58,7 @@ private:
     QWidget *sidebar;
 
     QPushButton *btnAccueil;
-    QPushButton *btnBureau;
+    QPushButton *btnBureau;        // bouton "Paramètres" (bas de la barre)
     QPushButton *btnEquipements;
     QPushButton *btnTechniciens;
     QPushButton *btnStations;
@@ -94,14 +93,14 @@ private:
 
 
     // =========================
-    // RECHERCHE / TRI / IMPORT
+    // RECHERCHE / TRI / EXPORT PDF
     // =========================
 
     QLineEdit *recherche;
     QComboBox *triCombo;
     QPushButton *btnTrier;
     QPushButton *btnRechercher;
-    QPushButton *btnImporterCV;
+    QPushButton *btnExporterPDF;
 
 
     // =========================
@@ -115,7 +114,7 @@ private:
     // STATISTIQUES
     // =========================
 
-    StatisticsWidget *statisticsWidget;
+    TechStatisticsWidget *statisticsWidget;
 
     QLabel *lblTotal;
     QLabel *lblActifs;
@@ -123,27 +122,21 @@ private:
 
 
     // =========================
-    // METHODES METIER
-    // =========================
-
-    QPushButton *btnEntretien;
-    QPushButton *btnQuestionnaire;
-    QPushButton *btnCompetences;
-    QPushButton *btnSpecialite;
-
-
-    // =========================
     // METHODES
     // =========================
 
     void setupUI();
-    void setupSidebar();
-    void setupTechnicienForm();
-    void setupStatistics();
-    void setupTable();
-    void setupMetiers();
+    QWidget *setupSidebar();
+    QWidget *setupHeader();
+    QGroupBox *setupTechnicienForm();
+    QWidget *setupActionBar();
+    QGroupBox *setupStatistics();
+    QGroupBox *setupTable();
 
     void appliquerStyle();
+    void chargerDonneesDemo();
+    void chargerDepuisBase();
+    Technicien lireFormulaire() const;
 
     void ajouterTechnicien();
     void modifierTechnicien();
@@ -152,16 +145,16 @@ private:
 
     void rechercherTechnicien();
     void trierTechnicien();
-    void importerCV();
+    void exporterPDF();
 
     void selectionnerTechnicien(int row, int column);
 
-    void creerEntretien();
-    void remplirQuestionnaire();
-    void evaluerCompetences();
-    void determinerSpecialite();
-
     void updateStatistics();
+
+    // Utilitaires
+    bool validerChamps(int ligneIgnoree);
+    int trouverLigneParId(int id) const;
+    void remplirLigne(int row);
 };
 
 #endif // TECHNICIENNE_H
