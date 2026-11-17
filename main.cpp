@@ -1,13 +1,14 @@
+
 #include <QApplication>
 #include <QMessageBox>
 #include <QMainWindow>
 #include <QPushButton>
 #include <QList>
 #include <QString>
-#include <QMessageBox>
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QStackedWidget>
+#include <QWidget>
 
 #include "technicienne.h"
 #include "stationwuindow.h"
@@ -16,17 +17,15 @@
 #include "gutilisateur.h"
 #include "connection.h"
 
-<<<<<<< HEAD
-// Navigate between modules inside ONE main application window
+// ==========================================
+// NAVIGATION BETWEEN MODULES
+// ==========================================
+
 static void connecterNavigation(
     QMainWindow *from,
     QStackedWidget *pages,
     QWidget *toPage,
     const QString &motCle)
-=======
-// Switch from one module window to another
-static void basculerFenetre(QMainWindow *from, QMainWindow *to)
->>>>>>> origin/crudbureau
 {
     if (from == nullptr || pages == nullptr || toPage == nullptr)
         return;
@@ -35,7 +34,9 @@ static void basculerFenetre(QMainWindow *from, QMainWindow *to)
         from->findChildren<QPushButton *>();
 
     for (QPushButton *bouton : boutons) {
+
         if (bouton->text().contains(motCle, Qt::CaseInsensitive)) {
+
             QObject::connect(
                 bouton,
                 &QPushButton::clicked,
@@ -47,64 +48,85 @@ static void basculerFenetre(QMainWindow *from, QMainWindow *to)
     }
 }
 
+// ==========================================
+// MAIN
+// ==========================================
+
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
     QApplication::setStyle("Fusion");
     QApplication::setApplicationName("Smart Weather Management");
+
+    // ==========================================
+    // DATABASE CONNECTION
+    // ==========================================
+
     Connection& connection = Connection::createInstance();
-    if(!connection.createConnection())
-    {
-        //QMessageBox::critical(nullptr, "Erreur de connexion", "Impossible de se connecter à la base de données.\n", "Vérifiez la source ODBC, le nom d'utilisateur et le mot de passe.", QMessageBox::Ok);
-        return -1;
-    }
-    QMessageBox::information(nullptr, "Information", "Connexion à la base de données réussie.", QMessageBox::Ok);
 
-    // Oracle connection using the existing Singleton
-    Connection& connexion = Connection::createInstance();
+    if (!connection.createConnection()) {
 
-    if (connexion.createConnection()) {
-        QMessageBox::information(
-            nullptr,
-            "Connexion Oracle",
-            "Connexion reussie !"
-            );
-    } else {
         QMessageBox::critical(
             nullptr,
-            "Connexion Oracle",
-            QString("Echec de la connexion !\n\nErreur : %1")
+            "Erreur de connexion",
+            QString("Impossible de se connecter à la base de données.\n\nErreur : %1")
                 .arg(QSqlDatabase::database().lastError().text())
             );
+
+        return -1;
     }
 
-    // Create the five existing modules.
-    // They are allocated dynamically because the shared
-    // QStackedWidget will become their parent.
+    QMessageBox::information(
+        nullptr,
+        "Connexion Oracle",
+        "Connexion à la base de données réussie."
+        );
+
+    // ==========================================
+    // CREATE THE FIVE MODULES
+    // ==========================================
+
     Technicienne *fenetreTechniciens = new Technicienne();
+
     StationWindow *fenetreStations = new StationWindow();
+
     GBureaux *fenetreBureaux = new GBureaux();
+
     WeatherWiseTest *fenetreEquipements = new WeatherWiseTest();
+
     Gutilisateur *fenetreUtilisateurs = new Gutilisateur();
 
-    // Create ONE application window
+    // ==========================================
+    // MAIN APPLICATION WINDOW
+    // ==========================================
+
     QMainWindow fenetrePrincipale;
+
     fenetrePrincipale.setWindowTitle("Smart Weather Management");
+
     fenetrePrincipale.resize(1500, 850);
 
     QStackedWidget *pages = new QStackedWidget(&fenetrePrincipale);
+
     fenetrePrincipale.setCentralWidget(pages);
 
-    // Put the complete module windows into the shared stack.
-    // No centralWidget() or takeCentralWidget() calls are needed.
+    // Add all modules to the same QStackedWidget
+
     pages->addWidget(fenetreTechniciens);
+
     pages->addWidget(fenetreStations);
+
     pages->addWidget(fenetreBureaux);
+
     pages->addWidget(fenetreEquipements);
+
     pages->addWidget(fenetreUtilisateurs);
 
-    // TECHNICIENS -> other modules
+    // ==========================================
+    // TECHNICIENS -> OTHER MODULES
+    // ==========================================
+
     connecterNavigation(fenetreTechniciens, pages,
                         fenetreStations, "Gestion des stations");
 
@@ -117,7 +139,10 @@ int main(int argc, char *argv[])
     connecterNavigation(fenetreTechniciens, pages,
                         fenetreUtilisateurs, "Gestion des utilisateurs");
 
-    // STATIONS -> other modules
+    // ==========================================
+    // STATIONS -> OTHER MODULES
+    // ==========================================
+
     connecterNavigation(fenetreStations, pages,
                         fenetreTechniciens, "Gestion des techniciens");
 
@@ -130,7 +155,10 @@ int main(int argc, char *argv[])
     connecterNavigation(fenetreStations, pages,
                         fenetreUtilisateurs, "Gestion des utilisateurs");
 
-    // BUREAUX -> other modules
+    // ==========================================
+    // BUREAUX -> OTHER MODULES
+    // ==========================================
+
     connecterNavigation(fenetreBureaux, pages,
                         fenetreTechniciens, "Gestion des techniciens");
 
@@ -143,7 +171,10 @@ int main(int argc, char *argv[])
     connecterNavigation(fenetreBureaux, pages,
                         fenetreUtilisateurs, "Gestion des utilisateurs");
 
-    // EQUIPEMENTS -> other modules
+    // ==========================================
+    // EQUIPEMENTS -> OTHER MODULES
+    // ==========================================
+
     connecterNavigation(fenetreEquipements, pages,
                         fenetreTechniciens, "Gestion des techniciens");
 
@@ -156,7 +187,10 @@ int main(int argc, char *argv[])
     connecterNavigation(fenetreEquipements, pages,
                         fenetreUtilisateurs, "Gestion des utilisateurs");
 
-    // UTILISATEURS -> other modules
+    // ==========================================
+    // UTILISATEURS -> OTHER MODULES
+    // ==========================================
+
     connecterNavigation(fenetreUtilisateurs, pages,
                         fenetreTechniciens, "Techniciens");
 
@@ -169,22 +203,17 @@ int main(int argc, char *argv[])
     connecterNavigation(fenetreUtilisateurs, pages,
                         fenetreEquipements, "Équipements");
 
-<<<<<<< HEAD
+    // ==========================================
+    // START APPLICATION
+    // ==========================================
+
     // Start with the existing login screen
+
     pages->setCurrentWidget(fenetreUtilisateurs);
 
     // Display the single application window
-    fenetrePrincipale.show();
-=======
-    // Start with the Techniciens module
-    fenetreUtilisateurs.show();
 
-    if (!Connection::createInstance().createConnection()) {
-        QMessageBox::critical(nullptr, "Erreur", "Connexion à la base impossible.");
-        return 1;
-    }
-    GBureaux w;
->>>>>>> origin/crudbureau
+    fenetrePrincipale.show();
 
     return app.exec();
 }

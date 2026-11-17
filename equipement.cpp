@@ -219,7 +219,6 @@ bool EquipementDAO::modifier(const QString &id,
     return query.numRowsAffected() > 0;
 }
 
-
 // Supprimer un equipement
 bool EquipementDAO::supprimer(const QString &id)
 {
@@ -239,4 +238,83 @@ bool EquipementDAO::supprimer(const QString &id)
     }
 
     return query.numRowsAffected() > 0;
+}
+
+
+// ==========================================
+// RECHERCHER UN EQUIPEMENT
+// ==========================================
+
+QSqlQueryModel *EquipementDAO::rechercher(const QString &texte)
+{
+    QSqlQuery query;
+
+    query.prepare(
+        "SELECT ID_EQUIPEMENT, NOM_EQUIPEMENT, "
+        "LOCALISATION_EQUIPEMENT, STATUT_EQUIPEMENT, "
+        "DATE_INSTALLATION_EQUIPEMENT, TYPE_EQUIPEMENT "
+        "FROM EQUIPEMENTS "
+        "WHERE TO_CHAR(ID_EQUIPEMENT) LIKE :id "
+        "OR UPPER(NOM_EQUIPEMENT) LIKE UPPER(:nom) "
+        "OR UPPER(LOCALISATION_EQUIPEMENT) LIKE UPPER(:localisation) "
+        "OR UPPER(STATUT_EQUIPEMENT) LIKE UPPER(:statut) "
+        "OR TO_CHAR(DATE_INSTALLATION_EQUIPEMENT, 'DD/MM/YYYY') LIKE :date "
+        "OR UPPER(TYPE_EQUIPEMENT) LIKE UPPER(:type)"
+        );
+
+    QString recherche = "%" + texte.trimmed() + "%";
+
+    query.bindValue(":id", recherche);
+    query.bindValue(":nom", recherche);
+    query.bindValue(":localisation", recherche);
+    query.bindValue(":statut", recherche);
+    query.bindValue(":date", recherche);
+    query.bindValue(":type", recherche);
+
+    if (!query.exec())
+    {
+        qDebug() << "Erreur recherche :" << query.lastError().text();
+    }
+
+    QSqlQueryModel *model = new QSqlQueryModel();
+    model->setQuery(query);
+
+    return model;
+}
+
+
+// ==========================================
+// TRIER LES EQUIPEMENTS
+// ==========================================
+
+QSqlQueryModel *EquipementDAO::trier(const QString &champTri)
+{
+    QString colonneTri;
+
+    if (champTri == "Nom")
+        colonneTri = "NOM_EQUIPEMENT";
+    else if (champTri == "Localisation")
+        colonneTri = "LOCALISATION_EQUIPEMENT";
+    else if (champTri == "Statut")
+        colonneTri = "STATUT_EQUIPEMENT";
+    else if (champTri == "Type")
+        colonneTri = "TYPE_EQUIPEMENT";
+    else
+        colonneTri = "ID_EQUIPEMENT";
+
+    QString sql =
+        "SELECT ID_EQUIPEMENT, NOM_EQUIPEMENT, "
+        "LOCALISATION_EQUIPEMENT, STATUT_EQUIPEMENT, "
+        "DATE_INSTALLATION_EQUIPEMENT, TYPE_EQUIPEMENT "
+        "FROM EQUIPEMENTS ORDER BY " + colonneTri + " ASC";
+
+    QSqlQueryModel *model = new QSqlQueryModel();
+    model->setQuery(sql);
+
+    if (model->lastError().isValid())
+    {
+        qDebug() << "Erreur tri :" << model->lastError().text();
+    }
+
+    return model;
 }

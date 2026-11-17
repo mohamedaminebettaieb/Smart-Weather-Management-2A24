@@ -30,7 +30,6 @@
 #include <QVBoxLayout>
 #include <QVariant>
 #include <QBrush>
-#include <algorithm>
 
 // ==========================================
 // PAYS UTILISE
@@ -320,40 +319,6 @@ static QLabel *makeCardTitle(const QString &t)
 
 
 // ==========================================
-// FONCTIONS DE TRI
-// ==========================================
-
-static bool lessNom(
-    const Equipement &a,
-    const Equipement &b)
-{
-    return a.getNom().localeAwareCompare(b.getNom()) < 0;
-}
-
-static bool lessLocalisation(
-    const Equipement &a,
-    const Equipement &b)
-{
-    return a.getLocalisation().localeAwareCompare(
-               b.getLocalisation()) < 0;
-}
-
-static bool lessStatut(
-    const Equipement &a,
-    const Equipement &b)
-{
-    return a.getStatut().localeAwareCompare(b.getStatut()) < 0;
-}
-
-static bool lessType(
-    const Equipement &a,
-    const Equipement &b)
-{
-    return a.getType().localeAwareCompare(b.getType()) < 0;
-}
-
-
-// ==========================================
 // AJOUTER UN CHAMP DANS LA GRILLE
 // ==========================================
 
@@ -587,7 +552,6 @@ void WeatherWiseTest::loadSampleData()
 {
     m_equipements.clear();
 
-    // Informations des équipements
     const char *noms[] = {
         "Station météo principale",
         "Thermomètre central",
@@ -1030,19 +994,16 @@ QWidget *WeatherWiseTest::buildToolbar()
     connect(bClear, SIGNAL(clicked()),
             this, SLOT(onClear()));
 
+    // Le bouton Trier appelle uniquement onSort()
     connect(bSort, SIGNAL(clicked()),
             this, SLOT(onSort()));
 
-    connect(m_sort, SIGNAL(currentIndexChanged(int)),
-            this, SLOT(onSort()));
-
+    // Le bouton Rechercher appelle uniquement onSearch()
     connect(bFind, SIGNAL(clicked()),
             this, SLOT(onSearch()));
 
+    // Entrée dans le champ = recherche
     connect(m_search, SIGNAL(returnPressed()),
-            this, SLOT(onSearch()));
-
-    connect(m_search, SIGNAL(textChanged(QString)),
             this, SLOT(onSearch()));
 
     connect(bPdf, SIGNAL(clicked()),
@@ -1089,7 +1050,6 @@ QWidget *WeatherWiseTest::buildTableCard()
 
     v->addLayout(top);
 
-    // Six colonnes pour six informations
     m_table = new QTableWidget(0, 6);
 
     QStringList headers;
@@ -1143,55 +1103,14 @@ QWidget *WeatherWiseTest::buildTableCard()
 
 void WeatherWiseTest::refreshTable()
 {
-    const QString q = m_search->text().trimmed();
-
-    QVector<Equipement> list;
-
-    for (int i = 0; i < m_equipements.size(); ++i)
-    {
-        const Equipement &e = m_equipements.at(i);
-
-        const QString date =
-            e.getDateInstallation().toString("dd/MM/yyyy");
-
-        bool match =
-            q.isEmpty()
-            || e.getId().contains(q, Qt::CaseInsensitive)
-            || e.getNom().contains(q, Qt::CaseInsensitive)
-            || e.getLocalisation().contains(q, Qt::CaseInsensitive)
-            || e.getStatut().contains(q, Qt::CaseInsensitive)
-            || date.contains(q, Qt::CaseInsensitive)
-            || e.getType().contains(q, Qt::CaseInsensitive);
-
-        if (match)
-        {
-            list.append(e);
-        }
-    }
-
-    if (m_sortMode == 0)
-    {
-        std::sort(list.begin(), list.end(), lessNom);
-    }
-    else if (m_sortMode == 1)
-    {
-        std::sort(list.begin(), list.end(), lessLocalisation);
-    }
-    else if (m_sortMode == 2)
-    {
-        std::sort(list.begin(), list.end(), lessStatut);
-    }
-    else if (m_sortMode == 3)
-    {
-        std::sort(list.begin(), list.end(), lessType);
-    }
+    // Afficher tous les équipements sans recherche ni tri local
 
     m_table->setRowCount(0);
-    m_table->setRowCount(list.size());
+    m_table->setRowCount(m_equipements.size());
 
-    for (int r = 0; r < list.size(); ++r)
+    for (int r = 0; r < m_equipements.size(); ++r)
     {
-        const Equipement &e = list.at(r);
+        const Equipement &e = m_equipements.at(r);
 
         m_table->setItem(
             r, 0, new QTableWidgetItem(e.getId())
@@ -1700,9 +1619,105 @@ void WeatherWiseTest::onClear()
 
 void WeatherWiseTest::onSort()
 {
-    m_sortMode = m_sort->currentIndex();
+    EquipementDAO dao;
 
-    refreshTable();
+    // Appel indépendant de la fonction trier()
+    QSqlQueryModel *model = dao.trier(m_sort->currentText());
+
+    if (!model || model->lastError().isValid())
+    {
+        qDebug() << "Erreur tri :"
+                 << (model ? model->lastError().text() : "Model null");
+
+        delete model;
+        return;
+    }
+
+    m_table->setRowCount(0);
+    m_table->setRowCount(model->rowCount());
+
+    for (int i = 0; i < model->rowCount(); ++i)
+    {
+        m_table->setItem(
+            i, 0,
+            new QTableWidgetItem(
+                model->data(model->index(i, 0)).toString()
+                )
+            );
+
+        m_table->setItem(
+            i, 1,
+            new QTableWidgetItem(
+                model->data(model->index(i, 1)).toString()
+                )
+            );
+
+        m_table->setItem(
+            i, 2,
+            new QTableWidgetItem(
+                model->data(model->index(i, 2)).toString()
+                )
+            );
+
+        QVariant dateValue = model->data(model->index(i, 4));
+
+        QDate date = dateValue.toDate();
+
+        if (!date.isValid())
+        {
+            QString dateText = dateValue.toString();
+
+            date = QDate::fromString(dateText, "yyyy-MM-dd");
+
+            if (!date.isValid())
+            {
+                date = QDate::fromString(dateText, "dd/MM/yyyy");
+            }
+
+            if (!date.isValid())
+            {
+                date = QDate::fromString(
+                    dateText.left(10), "yyyy-MM-dd"
+                    );
+            }
+        }
+
+        m_table->setItem(
+            i, 3,
+            new QTableWidgetItem(
+                date.isValid() ? date.toString("dd/MM/yyyy")
+                               : dateValue.toString()
+                )
+            );
+
+        QTableWidgetItem *st = new QTableWidgetItem(
+            model->data(model->index(i, 3)).toString()
+            );
+
+        if (st->text() == "Actif")
+        {
+            st->setForeground(QBrush(QColor("#16a068")));
+        }
+        else if (st->text() == "Inactif")
+        {
+            st->setForeground(QBrush(QColor("#e5474f")));
+        }
+        else
+        {
+            st->setForeground(QBrush(QColor("#f0a000")));
+        }
+
+        m_table->setItem(i, 4, st);
+
+        m_table->setItem(
+            i, 5,
+            new QTableWidgetItem(
+                model->data(model->index(i, 5)).toString()
+                )
+            );
+    }
+
+    delete model;
 }
 
 
@@ -1712,7 +1727,105 @@ void WeatherWiseTest::onSort()
 
 void WeatherWiseTest::onSearch()
 {
-    refreshTable();
+    EquipementDAO dao;
+
+    // Appel indépendant de la fonction rechercher()
+    QSqlQueryModel *model = dao.rechercher(m_search->text());
+
+    if (!model || model->lastError().isValid())
+    {
+        qDebug() << "Erreur recherche :"
+                 << (model ? model->lastError().text() : "Model null");
+
+        delete model;
+        return;
+    }
+
+    m_table->setRowCount(0);
+    m_table->setRowCount(model->rowCount());
+
+    for (int i = 0; i < model->rowCount(); ++i)
+    {
+        m_table->setItem(
+            i, 0,
+            new QTableWidgetItem(
+                model->data(model->index(i, 0)).toString()
+                )
+            );
+
+        m_table->setItem(
+            i, 1,
+            new QTableWidgetItem(
+                model->data(model->index(i, 1)).toString()
+                )
+            );
+
+        m_table->setItem(
+            i, 2,
+            new QTableWidgetItem(
+                model->data(model->index(i, 2)).toString()
+                )
+            );
+
+        QVariant dateValue = model->data(model->index(i, 4));
+
+        QDate date = dateValue.toDate();
+
+        if (!date.isValid())
+        {
+            QString dateText = dateValue.toString();
+
+            date = QDate::fromString(dateText, "yyyy-MM-dd");
+
+            if (!date.isValid())
+            {
+                date = QDate::fromString(dateText, "dd/MM/yyyy");
+            }
+
+            if (!date.isValid())
+            {
+                date = QDate::fromString(
+                    dateText.left(10), "yyyy-MM-dd"
+                    );
+            }
+        }
+
+        m_table->setItem(
+            i, 3,
+            new QTableWidgetItem(
+                date.isValid() ? date.toString("dd/MM/yyyy")
+                               : dateValue.toString()
+                )
+            );
+
+        QTableWidgetItem *st = new QTableWidgetItem(
+            model->data(model->index(i, 3)).toString()
+            );
+
+        if (st->text() == "Actif")
+        {
+            st->setForeground(QBrush(QColor("#16a068")));
+        }
+        else if (st->text() == "Inactif")
+        {
+            st->setForeground(QBrush(QColor("#e5474f")));
+        }
+        else
+        {
+            st->setForeground(QBrush(QColor("#f0a000")));
+        }
+
+        m_table->setItem(i, 4, st);
+
+        m_table->setItem(
+            i, 5,
+            new QTableWidgetItem(
+                model->data(model->index(i, 5)).toString()
+                )
+            );
+    }
+
+    delete model;
 }
 
 

@@ -68,6 +68,12 @@ public:
                   const QString &type);
 
     bool supprimer(const QString &id);
+
+    // Recherche
+    QSqlQueryModel *rechercher(const QString &texte);
+
+    // Tri
+    QSqlQueryModel *trier(const QString &champTri);
 };
 
 #endif // EQUIPEMENT_H

@@ -13,7 +13,6 @@
 #include <QString>
 #include <QStringList>
 #include <QDate>
-#include <QLocale>
 #include <QtMath>
 #include <QColor>
 #include <QRectF>
@@ -29,7 +28,6 @@ class QDateEdit;
 class QLabel;
 class QPushButton;
 
-
 // ==========================================
 // CLASSE DONNEES GEOGRAPHIQUES
 // ==========================================
@@ -37,6 +35,7 @@ class QPushButton;
 class EquipementCountryGeo
 {
 public:
+
     QString nom;
     QVector<QPointF> contour;
     QStringList villes;
@@ -50,7 +49,6 @@ public:
     }
 };
 
-
 // ==========================================
 // CLASSE GRAPHIQUE EN ANNEAU
 // ==========================================
@@ -58,6 +56,7 @@ public:
 class EquipementDonutChart : public QWidget
 {
 public:
+
     explicit EquipementDonutChart(QWidget *parent = 0)
         : QWidget(parent),
         m_actifs(0),
@@ -120,14 +119,17 @@ protected:
 
             const int spanI = -360 * 16 - spanA;
 
+            // Equipements actifs
             pen.setColor(QColor("#16a068"));
             p.setPen(pen);
             p.drawArc(r, start, spanA);
 
+            // Equipements inactifs
             if (m_inactifs > 0)
             {
                 pen.setColor(QColor("#e5474f"));
                 p.setPen(pen);
+
                 p.drawArc(
                     r,
                     start + spanA,
@@ -136,6 +138,7 @@ protected:
             }
         }
 
+        // Nombre total
         p.setPen(QColor("#0f2a52"));
 
         QFont f = font();
@@ -154,6 +157,7 @@ protected:
             QString::number(total)
             );
 
+        // Texte sous le nombre
         f.setPointSize(10);
         f.setBold(false);
         p.setFont(f);
@@ -175,7 +179,6 @@ private:
     int m_actifs;
     int m_inactifs;
 };
-
 
 // ==========================================
 // CLASSE CARTE GEOGRAPHIQUE
@@ -223,12 +226,14 @@ protected:
         double lonMin = 180;
         double lonMax = -180;
 
+        // Determiner les limites geographiques
         for (int i = 0; i < m_geo.contour.size(); ++i)
         {
             const QPointF &pt = m_geo.contour.at(i);
 
             latMin = qMin(latMin, pt.x());
             latMax = qMax(latMax, pt.x());
+
             lonMin = qMin(lonMin, pt.y());
             lonMax = qMax(lonMax, pt.y());
         }
@@ -242,6 +247,10 @@ protected:
 
         const double wSpan = (lonMax - lonMin) * kx;
         const double hSpan = latMax - latMin;
+
+        // Eviter une division par zero
+        if (wSpan <= 0 || hSpan <= 0)
+            return;
 
         const double scale =
             qMin(
@@ -397,6 +406,7 @@ protected:
 
         p.setPen(Qt::NoPen);
 
+        // Actif
         p.setBrush(QColor("#16a068"));
 
         p.drawEllipse(
@@ -408,6 +418,7 @@ protected:
             5
             );
 
+        // Inactif
         p.setBrush(QColor("#e5474f"));
 
         p.drawEllipse(
@@ -419,6 +430,7 @@ protected:
             5
             );
 
+        // En maintenance
         p.setBrush(QColor("#f0a000"));
 
         p.drawEllipse(
@@ -467,7 +479,6 @@ private:
     QVector<Equipement> m_equipements;
 };
 
-
 // ==========================================
 // CLASSE FENETRE PRINCIPALE
 // ==========================================
@@ -482,23 +493,31 @@ public:
 
 private slots:
 
+    // Gestion des equipements
     void onAdd();
     void onEdit();
     void onDelete();
     void onClear();
 
+    // Recherche et tri independants
     void onSort();
     void onSearch();
 
+    // Selection d'une ligne
     void onRowSelected();
 
+    // Date et heure
     void updateClock();
 
+    // Export PDF
     void exportPdf();
 
 private:
 
-    // Interface
+    // ======================================
+    // INTERFACE
+    // ======================================
+
     QWidget *buildSidebar();
     QWidget *buildHeader();
     QWidget *buildFormCard();
@@ -509,7 +528,10 @@ private:
 
     static QString styleSheet();
 
-    // Logique
+    // ======================================
+    // LOGIQUE
+    // ======================================
+
     void detectCountry();
     void loadSampleData();
     void refreshTable();
@@ -521,8 +543,10 @@ private:
 
 private:
 
+    // Liste principale des equipements
     QVector<Equipement> m_equipements;
 
+    // Identifiant de l'equipement en modification
     QString m_editId;
 
     /*
@@ -534,11 +558,14 @@ private:
      */
     int m_sortMode;
 
+    // Donnees geographiques
     EquipementCountryGeo m_geo;
 
     QString m_geoNote;
 
-    // Widgets
+    // ======================================
+    // WIDGETS
+    // ======================================
 
     QTableWidget *m_table;
 
@@ -557,7 +584,9 @@ private:
     QLabel *m_dateLabel;
     QLabel *m_timeLabel;
 
-    // Formulaire
+    // ======================================
+    // FORMULAIRE
+    // ======================================
 
     QLineEdit *m_id;
     QLineEdit *m_nom;
