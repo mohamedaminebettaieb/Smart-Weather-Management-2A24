@@ -30,6 +30,8 @@ qt_add_executable(SmartWeatherManagement
 
     gutilisateur.cpp
     gutilisateur.h
+    utilisateur.cpp
+    utilisateur.h
     gutilisateur.ui
 
     connection.cpp

@@ -28,8 +28,8 @@ bool Connection::createConnection()
         return true;
 
     db.setDatabaseName("Source_Projet2A");
-    db.setUserName("Dhia");
-    db.setPassword("didosouli27366544");
+    db.setUserName("donia");
+    db.setPassword("12345");
 
     if (db.open()) {
         qDebug() << "Connexion Success";

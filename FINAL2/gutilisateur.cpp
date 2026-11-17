@@ -44,7 +44,15 @@ Gutilisateur::Gutilisateur(QWidget *parent)
                      << "Responsable de station";
 
     construireInterface();
-    ajouterDonneesTest();
+
+    // Chargement des utilisateurs depuis la base de données
+    QString err;
+    utilisateurs = Utilisateur::afficher(&err);
+
+    if (!err.isEmpty())
+        QMessageBox::warning(this, "Base de données",
+                             "Chargement impossible :\n" + err);
+
     trierUtilisateurs();
     mettreAJourStatistiques();
     viderFormulaire();
@@ -756,17 +764,17 @@ void Gutilisateur::seConnecter()
     {
         const Utilisateur &u = utilisateurs.at(i);
 
-        if (aAcces(u.role)
-            && !u.mdp.isEmpty()
-            && u.email.compare(email, Qt::CaseInsensitive) == 0
-            && u.mdp == hacher(mdp))
+        if (aAcces(u.getRole())
+            && !u.getMdp().isEmpty()
+            && u.getEmail().compare(email, Qt::CaseInsensitive) == 0
+            && u.getMdp() == hacher(mdp))
         {
-            utilisateurConnecte = u.id;
+            utilisateurConnecte = u.getId();
             loginEchecs = 0;
 
-            labelConnecte->setText("👤  " + u.prenom + " " + u.nom + "  ·  " + u.role);
+            labelConnecte->setText("👤  " + u.getPrenom() + " " + u.getNom() + "  ·  " + u.getRole());
 
-            enregistrerAction("Connexion : " + u.email);
+            enregistrerAction("Connexion : " + u.getEmail());
 
             loginEmail->clear();
             loginMdp->clear();
@@ -872,10 +880,10 @@ void Gutilisateur::envoyerCode()
         const Utilisateur &u = utilisateurs.at(i);
 
         bool correspond = parEmail
-                              ? (u.email.compare(contact, Qt::CaseInsensitive) == 0)
-                              : (u.tel == contact);
+                              ? (u.getEmail().compare(contact, Qt::CaseInsensitive) == 0)
+                              : (u.getTel() == contact);
 
-        if (correspond && aAcces(u.role))
+        if (correspond && aAcces(u.getRole()))
         {
             index = i;
             break;
@@ -898,7 +906,7 @@ void Gutilisateur::envoyerCode()
     code = 100000 + qrand() % 900000;
 #endif
 
-    recupId = utilisateurs.at(index).id;
+    recupId = utilisateurs.at(index).getId();
     recupCodeAttendu = QString::number(code);
     recupExpiration = QDateTime::currentDateTime().addSecs(300);   // 5 minutes
     recupEssais = 0;
@@ -973,7 +981,17 @@ void Gutilisateur::reinitialiserMdp()
         return;
     }
 
-    utilisateurs[index].mdp = hacher(nouveau);
+    // Enregistrement en base de données
+    QString ancienMdp = utilisateurs.at(index).getMdp();
+    utilisateurs[index].setMdp(hacher(nouveau));
+
+    QString err;
+    if (!utilisateurs[index].modifier(&err))
+    {
+        utilisateurs[index].setMdp(ancienMdp);   // on annule le changement en mémoire
+        recupInfo2->setText("⚠  Erreur base de données : " + err);
+        return;
+    }
 
     enregistrerAction("Réinitialisation du mot de passe, utilisateur ID "
                       + QString::number(recupId));
@@ -992,50 +1010,6 @@ QString Gutilisateur::hacher(const QString &mdp)
 
 
 // ============================================================
-// DONNEES TEST
-// ============================================================
-
-void Gutilisateur::ajouterDonneesTest()
-{
-    Utilisateur u1;
-    u1.id = 1; u1.nom = "Ben Ali"; u1.prenom = "Ahmed";
-    u1.tel = "22111222"; u1.role = "Administrateur";
-    u1.mdp = hacher("1234"); u1.email = "ahmed@gmail.com";
-    utilisateurs.append(u1);
-
-    Utilisateur u2;
-    u2.id = 2; u2.nom = "Trabelsi"; u2.prenom = "Sara";
-    u2.tel = "22333444"; u2.role = "Responsable RH";
-    u2.mdp = hacher("5678"); u2.email = "sara@gmail.com";
-    utilisateurs.append(u2);
-
-    Utilisateur u3;
-    u3.id = 3; u3.nom = "Mansouri"; u3.prenom = "Amine";
-    u3.tel = "22555666"; u3.role = "Responsable RH";
-    u3.mdp = hacher("abcd"); u3.email = "amine@gmail.com";
-    utilisateurs.append(u3);
-
-    Utilisateur u4;
-    u4.id = 4; u4.nom = "Gharbi"; u4.prenom = "Youssef";
-    u4.tel = "22777888"; u4.role = "Technicien";
-    u4.mdp = ""; u4.email = "youssef@gmail.com";
-    utilisateurs.append(u4);
-
-    Utilisateur u5;
-    u5.id = 5; u5.nom = "Jlassi"; u5.prenom = "Mariem";
-    u5.tel = "22999000"; u5.role = "Météorologue";
-    u5.mdp = ""; u5.email = "mariem@gmail.com";
-    utilisateurs.append(u5);
-
-    Utilisateur u6;
-    u6.id = 6; u6.nom = "Bouzid"; u6.prenom = "Salma";
-    u6.tel = "22123456"; u6.role = "Responsable de station";
-    u6.mdp = ""; u6.email = "salma@gmail.com";
-    utilisateurs.append(u6);
-}
-
-
-// ============================================================
 // TABLEAU
 // ============================================================
 
@@ -1049,16 +1023,16 @@ void Gutilisateur::remplirTableau()
 
         table->insertRow(i);
 
-        table->setItem(i, 0, new QTableWidgetItem(QString::number(u.id)));
-        table->setItem(i, 1, new QTableWidgetItem(u.nom));
-        table->setItem(i, 2, new QTableWidgetItem(u.prenom));
-        table->setItem(i, 3, new QTableWidgetItem(u.tel));
-        table->setItem(i, 4, new QTableWidgetItem(u.role));
-        table->setItem(i, 5, new QTableWidgetItem(u.email));
+        table->setItem(i, 0, new QTableWidgetItem(QString::number(u.getId())));
+        table->setItem(i, 1, new QTableWidgetItem(u.getNom()));
+        table->setItem(i, 2, new QTableWidgetItem(u.getPrenom()));
+        table->setItem(i, 3, new QTableWidgetItem(u.getTel()));
+        table->setItem(i, 4, new QTableWidgetItem(u.getRole()));
+        table->setItem(i, 5, new QTableWidgetItem(u.getEmail()));
 
         QTableWidgetItem *itemAcces =
-            new QTableWidgetItem(aAcces(u.role) ? "Oui" : "Non");
-        itemAcces->setForeground(QColor(aAcces(u.role) ? 0x16A34A : 0x94A3B8));
+            new QTableWidgetItem(aAcces(u.getRole()) ? "Oui" : "Non");
+        itemAcces->setForeground(QColor(aAcces(u.getRole()) ? 0x16A34A : 0x94A3B8));
         table->setItem(i, 6, itemAcces);
     }
 
@@ -1097,7 +1071,7 @@ void Gutilisateur::mettreAJourStatistiques()
 
         for (int i = 0; i < utilisateurs.size(); i++)
         {
-            if (utilisateurs.at(i).role == rolesDisponibles.at(r))
+            if (utilisateurs.at(i).getRole() == rolesDisponibles.at(r))
                 n++;
         }
 
@@ -1167,8 +1141,8 @@ void Gutilisateur::viderFormulaire()
     int prochain = 1;
     for (int i = 0; i < utilisateurs.size(); i++)
     {
-        if (utilisateurs.at(i).id >= prochain)
-            prochain = utilisateurs.at(i).id + 1;
+        if (utilisateurs.at(i).getId() >= prochain)
+            prochain = utilisateurs.at(i).getId() + 1;
     }
 
     champId->clear();
@@ -1200,18 +1174,18 @@ void Gutilisateur::chargerPourModification(int id)
 
     idEnEdition = id;
 
-    champId->setText(QString::number(u.id));
+    champId->setText(QString::number(u.getId()));
     champId->setEnabled(false);
 
-    champNom->setText(u.nom);
-    champPrenom->setText(u.prenom);
-    champTel->setText(u.tel);
-    champEmail->setText(u.email);
-    champRole->setCurrentIndex(qMax(0, rolesDisponibles.indexOf(u.role)));
+    champNom->setText(u.getNom());
+    champPrenom->setText(u.getPrenom());
+    champTel->setText(u.getTel());
+    champEmail->setText(u.getEmail());
+    champRole->setCurrentIndex(qMax(0, rolesDisponibles.indexOf(u.getRole())));
 
     champMdp->clear();
-    champMdp->setPlaceholderText(u.mdp.isEmpty() ? "Obligatoire pour les rôles avec accès"
-                                                 : "Laisser vide pour conserver");
+    champMdp->setPlaceholderText(u.getMdp().isEmpty() ? "Obligatoire pour les rôles avec accès"
+                                                      : "Laisser vide pour conserver");
     erreur->clear();
 
     majAccesFormulaire();
@@ -1237,7 +1211,7 @@ bool Gutilisateur::lireFormulaire(Utilisateur &u, bool edition)
     QString mdp = champMdp->text();
 
     bool acces = aAcces(role);
-    bool garderMdp = edition && !u.mdp.isEmpty();
+    bool garderMdp = edition && !u.getMdp().isEmpty();
 
     int id = idEnEdition;
 
@@ -1248,8 +1222,8 @@ bool Gutilisateur::lireFormulaire(Utilisateur &u, bool edition)
             id = 1;
             for (int i = 0; i < utilisateurs.size(); i++)
             {
-                if (utilisateurs.at(i).id >= id)
-                    id = utilisateurs.at(i).id + 1;
+                if (utilisateurs.at(i).getId() >= id)
+                    id = utilisateurs.at(i).getId() + 1;
             }
         }
         else
@@ -1313,24 +1287,24 @@ bool Gutilisateur::lireFormulaire(Utilisateur &u, bool edition)
         return false;
     }
 
-    u.id = id;
-    u.nom = nom;
-    u.prenom = prenom;
-    u.tel = tel;
-    u.email = email;
-    u.role = role;
+    u.setId(id);
+    u.setNom(nom);
+    u.setPrenom(prenom);
+    u.setTel(tel);
+    u.setEmail(email);
+    u.setRole(role);
 
     if (!acces)
-        u.mdp.clear();
+        u.setMdp(QString());
     else if (!mdp.isEmpty())
-        u.mdp = hacher(mdp);
+        u.setMdp(hacher(mdp));
 
     return true;
 }
 
 
 // ============================================================
-// AJOUTER / MODIFIER / SUPPRIMER
+// AJOUTER / MODIFIER / SUPPRIMER  (avec la base de données)
 // ============================================================
 
 void Gutilisateur::ajouterUtilisateur()
@@ -1340,9 +1314,16 @@ void Gutilisateur::ajouterUtilisateur()
     if (!lireFormulaire(u, false))
         return;
 
+    QString err;
+    if (!u.ajouter(&err))
+    {
+        afficherMessage("⚠  Échec de l'ajout : " + err, true);
+        return;
+    }
+
     utilisateurs.append(u);
 
-    enregistrerAction("Ajout utilisateur ID " + QString::number(u.id));
+    enregistrerAction("Ajout utilisateur ID " + QString::number(u.getId()));
 
     trierUtilisateurs();
     mettreAJourStatistiques();
@@ -1373,9 +1354,16 @@ void Gutilisateur::modifierUtilisateur()
     if (!lireFormulaire(u, true))
         return;
 
+    QString err;
+    if (!u.modifier(&err))
+    {
+        afficherMessage("⚠  Échec de la modification : " + err, true);
+        return;
+    }
+
     utilisateurs[index] = u;
 
-    enregistrerAction("Modification utilisateur ID " + QString::number(u.id));
+    enregistrerAction("Modification utilisateur ID " + QString::number(u.getId()));
 
     trierUtilisateurs();
     mettreAJourStatistiques();
@@ -1410,20 +1398,26 @@ void Gutilisateur::supprimerUtilisateur()
     if (rep != QMessageBox::Yes)
         return;
 
+    QString err;
+    if (!Utilisateur::supprimer(id, &err))
+    {
+        QMessageBox::critical(this, "Base de données",
+                              "Suppression impossible :\n" + err);
+        return;
+    }
+
     int index = trouverUtilisateur(id);
 
     if (index != -1)
-    {
         utilisateurs.removeAt(index);
 
-        enregistrerAction("Suppression utilisateur ID " + QString::number(id));
+    enregistrerAction("Suppression utilisateur ID " + QString::number(id));
 
-        viderFormulaire();
-        remplirTableau();
-        mettreAJourStatistiques();
+    viderFormulaire();
+    remplirTableau();
+    mettreAJourStatistiques();
 
-        afficherMessage("✔  Utilisateur supprimé.", false);
-    }
+    afficherMessage("✔  Utilisateur supprimé.", false);
 }
 
 
@@ -1440,11 +1434,11 @@ void Gutilisateur::trierUtilisateurs()
               {
                   switch (c)
                   {
-                  case 1:  return a.nom.toLower() < b.nom.toLower();
-                  case 2:  return a.prenom.toLower() < b.prenom.toLower();
-                  case 3:  return a.role.toLower() < b.role.toLower();
-                  case 4:  return a.email.toLower() < b.email.toLower();
-                  default: return a.id < b.id;
+                  case 1:  return a.getNom().toLower() < b.getNom().toLower();
+                  case 2:  return a.getPrenom().toLower() < b.getPrenom().toLower();
+                  case 3:  return a.getRole().toLower() < b.getRole().toLower();
+                  case 4:  return a.getEmail().toLower() < b.getEmail().toLower();
+                  default: return a.getId() < b.getId();
                   }
               });
 
@@ -1461,11 +1455,11 @@ void Gutilisateur::rechercherUtilisateur()
         const Utilisateur &u = utilisateurs.at(i);
 
         bool trouve = texte.isEmpty()
-                      || QString::number(u.id).contains(texte)
-                      || u.nom.toLower().contains(texte)
-                      || u.prenom.toLower().contains(texte)
-                      || u.role.toLower().contains(texte)
-                      || u.email.toLower().contains(texte);
+                      || QString::number(u.getId()).contains(texte)
+                      || u.getNom().toLower().contains(texte)
+                      || u.getPrenom().toLower().contains(texte)
+                      || u.getRole().toLower().contains(texte)
+                      || u.getEmail().toLower().contains(texte);
 
         table->setRowHidden(i, !trouve);
 
@@ -1499,14 +1493,14 @@ int Gutilisateur::idSelectionne()
     if (ligne < 0 || ligne >= utilisateurs.size())
         return -1;
 
-    return utilisateurs.at(ligne).id;
+    return utilisateurs.at(ligne).getId();
 }
 
 int Gutilisateur::trouverUtilisateur(int id)
 {
     for (int i = 0; i < utilisateurs.size(); i++)
     {
-        if (utilisateurs.at(i).id == id)
+        if (utilisateurs.at(i).getId() == id)
             return i;
     }
 
@@ -1598,13 +1592,13 @@ void Gutilisateur::exporterPDF()
         const Utilisateur &u = utilisateurs.at(i);
 
         html += "<tr>";
-        html += "<td>" + QString::number(u.id) + "</td>";
-        html += "<td>" + u.nom + "</td>";
-        html += "<td>" + u.prenom + "</td>";
-        html += "<td>" + u.tel + "</td>";
-        html += "<td>" + u.role + "</td>";
-        html += QString("<td>") + (aAcces(u.role) ? "Oui" : "Non") + "</td>";
-        html += "<td>" + u.email + "</td>";
+        html += "<td>" + QString::number(u.getId()) + "</td>";
+        html += "<td>" + u.getNom().toHtmlEscaped() + "</td>";
+        html += "<td>" + u.getPrenom().toHtmlEscaped() + "</td>";
+        html += "<td>" + u.getTel() + "</td>";
+        html += "<td>" + u.getRole() + "</td>";
+        html += QString("<td>") + (aAcces(u.getRole()) ? "Oui" : "Non") + "</td>";
+        html += "<td>" + u.getEmail().toHtmlEscaped() + "</td>";
         html += "</tr>";
     }
 
