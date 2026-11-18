@@ -17,9 +17,9 @@
 #include <QPushButton>
 
 /*
- * Structure représentant une station météo
+ * Classe représentant une station météo
  */
-struct Station
+class Station
 {
     int id;
     QString nom;
@@ -29,6 +29,37 @@ struct Station
     QDate dateInstallation;
     QString type;
     QString etat;
+
+public:
+    Station()
+        : id(0), latitude(0.0), longitude(0.0)
+    {
+    }
+
+    int getId() const { return id; }
+    void setId(int value) { id = value; }
+
+    QString getNom() const { return nom; }
+    void setNom(const QString &value) { nom = value; }
+
+    QString getLocalisation() const { return localisation; }
+    void setLocalisation(const QString &value) { localisation = value; }
+
+    double getLatitude() const { return latitude; }
+    void setLatitude(double value) { latitude = value; }
+
+    double getLongitude() const { return longitude; }
+    void setLongitude(double value) { longitude = value; }
+
+    QDate getDateInstallation() const { return dateInstallation; }
+    void setDateInstallation(const QDate &value) { dateInstallation = value; }
+
+    QString getType() const { return type; }
+    void setType(const QString &value) { type = value; }
+
+    QString getEtat() const { return etat; }
+    void setEtat(const QString &value) { etat = value; }
+
 };
 
 
@@ -38,6 +69,10 @@ struct Station
  */
 class StatisticsWidget : public QWidget
 {
+    int m_actifs;
+    int m_maintenance;
+    int m_horsService;
+
 public:
     explicit StatisticsWidget(QWidget *parent = nullptr);
 
@@ -47,11 +82,6 @@ public:
 
 protected:
     void paintEvent(QPaintEvent *event) override;
-
-private:
-    int m_actifs;
-    int m_maintenance;
-    int m_horsService;
 };
 
 
@@ -60,14 +90,7 @@ private:
  */
 class StationWindow : public QMainWindow
 {
-public:
-    explicit StationWindow(QWidget *parent = nullptr);
-
-private:
-
-    // =========================
-    // Interface
-    // =========================
+    // Attributs privés : interface
 
     QWidget *centralWidget;
 
@@ -99,9 +122,12 @@ private:
     // Données
     QVector<Station> stations;
 
-    // =========================
-    // Création de l'interface
-    // =========================
+public:
+    explicit StationWindow(QWidget *parent = nullptr);
+
+private:
+
+    // Méthodes privées : création de l'interface
 
     void setupUI();
     void setupStyle();
@@ -116,16 +142,12 @@ private:
     QGroupBox *createStatistics();
     QGroupBox *createLocationBox();
 
-    // =========================
-    // Données
-    // =========================
+    // Méthodes privées : données
 
     void loadDemoData();
     void loadStationsFromDatabase();
 
-    // =========================
-    // Tableau
-    // =========================
+    // Méthodes privées : tableau et formulaire
 
     void refreshTable();
 
@@ -135,9 +157,7 @@ private:
 
     void fillFormFromSelectedRow();
 
-    // =========================
-    // Actions
-    // =========================
+    // Méthodes privées : actions
 
     void addStation();
     void modifyStation();
@@ -148,9 +168,7 @@ private:
 
     void exportStations();
 
-    // =========================
-    // Utilitaires
-    // =========================
+    // Méthodes privées : utilitaires
 
     int selectedRow() const;
 

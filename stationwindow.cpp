@@ -1661,19 +1661,19 @@ void StationWindow::loadStationsFromDatabase()
     while (query.next())
     {
         Station station;
-        station.id = query.value(0).toString().toInt();
-        station.nom = query.value(1).toString();
-        station.localisation = query.value(2).toString();
-        station.latitude = query.value(3).toDouble();
-        station.longitude = query.value(4).toDouble();
+        station.setId(query.value(0).toString().toInt());
+        station.setNom(query.value(1).toString());
+        station.setLocalisation(query.value(2).toString());
+        station.setLatitude(query.value(3).toDouble());
+        station.setLongitude(query.value(4).toDouble());
 
         const QVariant dateValue = query.value(5);
-        station.dateInstallation = dateValue.toDate();
-        if (!station.dateInstallation.isValid())
-            station.dateInstallation = dateValue.toDateTime().date();
+        station.setDateInstallation(dateValue.toDate());
+        if (!station.getDateInstallation().isValid())
+            station.setDateInstallation(dateValue.toDateTime().date());
 
-        station.type = query.value(6).toString();
-        station.etat = query.value(7).toString();
+        station.setType(query.value(6).toString());
+        station.setEtat(query.value(7).toString());
         stations.append(station);
     }
 }
@@ -1685,112 +1685,112 @@ void StationWindow::loadDemoData()
 
     Station s1;
 
-    s1.id = 1;
-    s1.nom = "Station Tunis";
-    s1.localisation = "Tunis";
-    s1.latitude = 36.8065;
-    s1.longitude = 10.1815;
-    s1.dateInstallation = QDate(2025, 3, 12);
-    s1.type = "Automatique";
-    s1.etat = "Actif";
+    s1.setId(1);
+    s1.setNom("Station Tunis");
+    s1.setLocalisation("Tunis");
+    s1.setLatitude(36.8065);
+    s1.setLongitude(10.1815);
+    s1.setDateInstallation(QDate(2025, 3, 12));
+    s1.setType("Automatique");
+    s1.setEtat("Actif");
 
     stations.append(s1);
 
 
     Station s2;
 
-    s2.id = 2;
-    s2.nom = "Station Sfax";
-    s2.localisation = "Sfax";
-    s2.latitude = 34.7406;
-    s2.longitude = 10.7603;
-    s2.dateInstallation = QDate(2025, 5, 20);
-    s2.type = "Automatique";
-    s2.etat = "Actif";
+    s2.setId(2);
+    s2.setNom("Station Sfax");
+    s2.setLocalisation("Sfax");
+    s2.setLatitude(34.7406);
+    s2.setLongitude(10.7603);
+    s2.setDateInstallation(QDate(2025, 5, 20));
+    s2.setType("Automatique");
+    s2.setEtat("Actif");
 
     stations.append(s2);
 
 
     Station s3;
 
-    s3.id = 3;
-    s3.nom = "Station Sousse";
-    s3.localisation = "Sousse";
-    s3.latitude = 35.8256;
-    s3.longitude = 10.6370;
-    s3.dateInstallation = QDate(2024, 10, 10);
-    s3.type = "Hybride";
-    s3.etat = "Maintenance";
+    s3.setId(3);
+    s3.setNom("Station Sousse");
+    s3.setLocalisation("Sousse");
+    s3.setLatitude(35.8256);
+    s3.setLongitude(10.6370);
+    s3.setDateInstallation(QDate(2024, 10, 10));
+    s3.setType("Hybride");
+    s3.setEtat("Maintenance");
 
     stations.append(s3);
 
 
     Station s4;
 
-    s4.id = 4;
-    s4.nom = "Station Bizerte";
-    s4.localisation = "Bizerte";
-    s4.latitude = 37.2746;
-    s4.longitude = 9.8739;
-    s4.dateInstallation = QDate(2024, 7, 15);
-    s4.type = "Automatique";
-    s4.etat = "Actif";
+    s4.setId(4);
+    s4.setNom("Station Bizerte");
+    s4.setLocalisation("Bizerte");
+    s4.setLatitude(37.2746);
+    s4.setLongitude(9.8739);
+    s4.setDateInstallation(QDate(2024, 7, 15));
+    s4.setType("Automatique");
+    s4.setEtat("Actif");
 
     stations.append(s4);
 
 
     Station s5;
 
-    s5.id = 5;
-    s5.nom = "Station Kairouan";
-    s5.localisation = "Kairouan";
-    s5.latitude = 35.6781;
-    s5.longitude = 10.0963;
-    s5.dateInstallation = QDate(2023, 8, 9);
-    s5.type = "Manuelle";
-    s5.etat = "Hors service";
+    s5.setId(5);
+    s5.setNom("Station Kairouan");
+    s5.setLocalisation("Kairouan");
+    s5.setLatitude(35.6781);
+    s5.setLongitude(10.0963);
+    s5.setDateInstallation(QDate(2023, 8, 9));
+    s5.setType("Manuelle");
+    s5.setEtat("Hors service");
 
     stations.append(s5);
 
 
     Station s6;
 
-    s6.id = 6;
-    s6.nom = "Station Gabès";
-    s6.localisation = "Gabès";
-    s6.latitude = 33.8815;
-    s6.longitude = 10.0982;
-    s6.dateInstallation = QDate(2025, 1, 25);
-    s6.type = "Automatique";
-    s6.etat = "Actif";
+    s6.setId(6);
+    s6.setNom("Station Gabès");
+    s6.setLocalisation("Gabès");
+    s6.setLatitude(33.8815);
+    s6.setLongitude(10.0982);
+    s6.setDateInstallation(QDate(2025, 1, 25));
+    s6.setType("Automatique");
+    s6.setEtat("Actif");
 
     stations.append(s6);
 
 
     Station s7;
 
-    s7.id = 7;
-    s7.nom = "Station Gafsa";
-    s7.localisation = "Gafsa";
-    s7.latitude = 34.4250;
-    s7.longitude = 8.7842;
-    s7.dateInstallation = QDate(2024, 4, 18);
-    s7.type = "Hybride";
-    s7.etat = "Maintenance";
+    s7.setId(7);
+    s7.setNom("Station Gafsa");
+    s7.setLocalisation("Gafsa");
+    s7.setLatitude(34.4250);
+    s7.setLongitude(8.7842);
+    s7.setDateInstallation(QDate(2024, 4, 18));
+    s7.setType("Hybride");
+    s7.setEtat("Maintenance");
 
     stations.append(s7);
 
 
     Station s8;
 
-    s8.id = 8;
-    s8.nom = "Station Nabeul";
-    s8.localisation = "Nabeul";
-    s8.latitude = 36.4510;
-    s8.longitude = 10.7350;
-    s8.dateInstallation = QDate(2025, 2, 9);
-    s8.type = "Automatique";
-    s8.etat = "Actif";
+    s8.setId(8);
+    s8.setNom("Station Nabeul");
+    s8.setLocalisation("Nabeul");
+    s8.setLatitude(36.4510);
+    s8.setLongitude(10.7350);
+    s8.setDateInstallation(QDate(2025, 2, 9));
+    s8.setType("Automatique");
+    s8.setEtat("Actif");
 
     stations.append(s8);
 }
@@ -1819,15 +1819,15 @@ void StationWindow::refreshTable()
         if (!search.isEmpty())
         {
             QString data =
-                QString::number(station.id)
+                QString::number(station.getId())
                 + " "
-                + station.nom
+                + station.getNom()
                 + " "
-                + station.localisation
+                + station.getLocalisation()
                 + " "
-                + station.type
+                + station.getType()
                 + " "
-                + station.etat;
+                + station.getEtat();
 
             if (!data.toLower().contains(search))
             {
@@ -1850,7 +1850,7 @@ void StationWindow::refreshTable()
             row,
             0,
             new QTableWidgetItem(
-                QString::number(station.id)
+                QString::number(station.getId())
                 )
             );
 
@@ -1859,7 +1859,7 @@ void StationWindow::refreshTable()
             row,
             1,
             new QTableWidgetItem(
-                station.nom
+                station.getNom()
                 )
             );
 
@@ -1868,7 +1868,7 @@ void StationWindow::refreshTable()
             row,
             2,
             new QTableWidgetItem(
-                station.localisation
+                station.getLocalisation()
                 )
             );
 
@@ -1878,7 +1878,7 @@ void StationWindow::refreshTable()
             3,
             new QTableWidgetItem(
                 QString::number(
-                    station.latitude,
+                    station.getLatitude(),
                     'f',
                     4
                     )
@@ -1891,7 +1891,7 @@ void StationWindow::refreshTable()
             4,
             new QTableWidgetItem(
                 QString::number(
-                    station.longitude,
+                    station.getLongitude(),
                     'f',
                     4
                     )
@@ -1903,7 +1903,7 @@ void StationWindow::refreshTable()
             row,
             5,
             new QTableWidgetItem(
-                station.dateInstallation
+                station.getDateInstallation()
                     .toString("dd/MM/yyyy")
                 )
             );
@@ -1913,24 +1913,24 @@ void StationWindow::refreshTable()
             row,
             6,
             new QTableWidgetItem(
-                station.type
+                station.getType()
                 )
             );
 
 
         QTableWidgetItem *statusItem =
             new QTableWidgetItem(
-                station.etat
+                station.getEtat()
                 );
 
 
-        if (station.etat == "Actif")
+        if (station.getEtat() == "Actif")
         {
             statusItem->setForeground(
                 QColor("#16A765")
                 );
         }
-        else if (station.etat == "Maintenance")
+        else if (station.getEtat() == "Maintenance")
         {
             statusItem->setForeground(
                 QColor("#F39C12")
@@ -1981,15 +1981,15 @@ void StationWindow::updateStatistics()
 
     for (const Station &station : stations)
     {
-        if (station.etat == "Actif")
+        if (station.getEtat() == "Actif")
         {
             actifs++;
         }
-        else if (station.etat == "Maintenance")
+        else if (station.getEtat() == "Maintenance")
         {
             maintenance++;
         }
-        else if (station.etat == "Hors service")
+        else if (station.getEtat() == "Hors service")
         {
             horsService++;
         }
@@ -2024,7 +2024,7 @@ void StationWindow::addStation()
 
     for (const Station &station : stations)
     {
-        if (station.id == idEdit->value())
+        if (station.getId() == idEdit->value())
         {
             QMessageBox::warning(
                 this,
@@ -2039,29 +2039,21 @@ void StationWindow::addStation()
 
     Station station;
 
-    station.id =
-        idEdit->value();
+    station.setId(idEdit->value());
 
-    station.nom =
-        nomEdit->text().trimmed();
+    station.setNom(nomEdit->text().trimmed());
 
-    station.localisation =
-        localisationEdit->text().trimmed();
+    station.setLocalisation(localisationEdit->text().trimmed());
 
-    station.latitude =
-        latitudeEdit->value();
+    station.setLatitude(latitudeEdit->value());
 
-    station.longitude =
-        longitudeEdit->value();
+    station.setLongitude(longitudeEdit->value());
 
-    station.dateInstallation =
-        dateInstallationEdit->date();
+    station.setDateInstallation(dateInstallationEdit->date());
 
-    station.type =
-        typeCombo->currentText();
+    station.setType(typeCombo->currentText());
 
-    station.etat =
-        etatCombo->currentText();
+    station.setEtat(etatCombo->currentText());
 
     QSqlQuery query(QSqlDatabase::database());
     if (!query.prepare(
@@ -2078,14 +2070,16 @@ void StationWindow::addStation()
             );
         return;
     }
-    query.addBindValue(station.id);
-    query.addBindValue(station.nom);
-    query.addBindValue(station.localisation);
-    query.addBindValue(station.latitude);
-    query.addBindValue(station.longitude);
-    query.addBindValue(station.dateInstallation);
-    query.addBindValue(station.type);
-    query.addBindValue(station.etat);
+    query.addBindValue(station.getId());
+    query.addBindValue(station.getNom());
+    query.addBindValue(station.getLocalisation());
+    // The Oracle columns LATITUDE and LONGITUDE are VARCHAR2(20 BYTE).
+    // Store a short, locale-independent decimal string instead of a double.
+    query.addBindValue(QString::number(station.getLatitude(), 'f', 4));
+    query.addBindValue(QString::number(station.getLongitude(), 'f', 4));
+    query.addBindValue(station.getDateInstallation());
+    query.addBindValue(station.getType());
+    query.addBindValue(station.getEtat());
 
     if (!query.exec())
     {
@@ -2148,58 +2142,20 @@ void StationWindow::modifyStation()
             .toInt();
 
     Station updatedStation;
-    updatedStation.id = idEdit->value();
-    updatedStation.nom = nomEdit->text().trimmed();
-    updatedStation.localisation = localisationEdit->text().trimmed();
-    updatedStation.latitude = latitudeEdit->value();
-    updatedStation.longitude = longitudeEdit->value();
-    updatedStation.dateInstallation = dateInstallationEdit->date();
-    updatedStation.type = typeCombo->currentText();
-    updatedStation.etat = etatCombo->currentText();
-
-    if (updatedStation.id != id)
-    {
-        QSqlQuery idCheck(QSqlDatabase::database());
-        if (!idCheck.prepare(
-                "SELECT ID_STATION FROM STATIONS WHERE ID_STATION = ?"))
-        {
-            QMessageBox::critical(
-                this,
-                "Erreur de base de données",
-                "Impossible de vérifier l'ID de la station.\n"
-                    + idCheck.lastError().text()
-                );
-            return;
-        }
-
-        idCheck.addBindValue(updatedStation.id);
-        if (!idCheck.exec())
-        {
-            QMessageBox::critical(
-                this,
-                "Erreur de base de données",
-                "Impossible de vérifier l'ID de la station.\n"
-                    + idCheck.lastError().text()
-                );
-            return;
-        }
-
-        if (idCheck.next())
-        {
-            QMessageBox::warning(
-                this,
-                "ID déjà utilisé",
-                "Une autre station utilise déjà cet ID. Choisissez un ID libre."
-                );
-            return;
-        }
-    }
+    updatedStation.setId(id);
+    updatedStation.setNom(nomEdit->text().trimmed());
+    updatedStation.setLocalisation(localisationEdit->text().trimmed());
+    updatedStation.setLatitude(latitudeEdit->value());
+    updatedStation.setLongitude(longitudeEdit->value());
+    updatedStation.setDateInstallation(dateInstallationEdit->date());
+    updatedStation.setType(typeCombo->currentText());
+    updatedStation.setEtat(etatCombo->currentText());
 
     QSqlQuery query(QSqlDatabase::database());
     if (!query.prepare(
-        "UPDATE STATIONS SET ID_STATION = ?, NOM = ?, LOCALISATION = ?, "
-        "LATITUDE = ?, LONGITUDE = ?, DATE_INSTALLATION_STATION = ?, "
-        "TYPE_STATION = ?, STATUT_STATION = ? WHERE ID_STATION = ?"
+        "UPDATE STATIONS SET NOM = ?, LOCALISATION = ?, LATITUDE = ?, "
+        "LONGITUDE = ?, DATE_INSTALLATION_STATION = ?, TYPE_STATION = ?, "
+        "STATUT_STATION = ? WHERE ID_STATION = ?"
         ))
     {
         QMessageBox::critical(
@@ -2210,14 +2166,14 @@ void StationWindow::modifyStation()
             );
         return;
     }
-    query.addBindValue(updatedStation.id);
-    query.addBindValue(updatedStation.nom);
-    query.addBindValue(updatedStation.localisation);
-    query.addBindValue(updatedStation.latitude);
-    query.addBindValue(updatedStation.longitude);
-    query.addBindValue(updatedStation.dateInstallation);
-    query.addBindValue(updatedStation.type);
-    query.addBindValue(updatedStation.etat);
+    query.addBindValue(updatedStation.getNom());
+    query.addBindValue(updatedStation.getLocalisation());
+    // LATITUDE and LONGITUDE are VARCHAR2 columns in STATIONS.
+    query.addBindValue(QString::number(updatedStation.getLatitude(), 'f', 4));
+    query.addBindValue(QString::number(updatedStation.getLongitude(), 'f', 4));
+    query.addBindValue(updatedStation.getDateInstallation());
+    query.addBindValue(updatedStation.getType());
+    query.addBindValue(updatedStation.getEtat());
     query.addBindValue(id);
 
     if (!query.exec())
@@ -2245,31 +2201,21 @@ void StationWindow::modifyStation()
          i < stations.size();
          ++i)
     {
-        if (stations[i].id == id)
+        if (stations[i].getId() == id)
         {
-            stations[i].id =
-                idEdit->value();
+            stations[i].setNom(nomEdit->text().trimmed());
 
-            stations[i].nom =
-                nomEdit->text().trimmed();
+            stations[i].setLocalisation(localisationEdit->text().trimmed());
 
-            stations[i].localisation =
-                localisationEdit->text().trimmed();
+            stations[i].setLatitude(latitudeEdit->value());
 
-            stations[i].latitude =
-                latitudeEdit->value();
+            stations[i].setLongitude(longitudeEdit->value());
 
-            stations[i].longitude =
-                longitudeEdit->value();
+            stations[i].setDateInstallation(dateInstallationEdit->date());
 
-            stations[i].dateInstallation =
-                dateInstallationEdit->date();
+            stations[i].setType(typeCombo->currentText());
 
-            stations[i].type =
-                typeCombo->currentText();
-
-            stations[i].etat =
-                etatCombo->currentText();
+            stations[i].setEtat(etatCombo->currentText());
 
             break;
         }
@@ -2371,7 +2317,7 @@ void StationWindow::deleteStation()
          i < stations.size();
          ++i)
     {
-        if (stations[i].id == id)
+        if (stations[i].getId() == id)
         {
             stations.remove(i);
             break;
@@ -2417,8 +2363,8 @@ void StationWindow::sortStations()
             [](const Station &a,
                const Station &b)
             {
-                return a.nom.toLower()
-                < b.nom.toLower();
+                return a.getNom().toLower()
+                < b.getNom().toLower();
             }
             );
     }
@@ -2430,7 +2376,7 @@ void StationWindow::sortStations()
             [](const Station &a,
                const Station &b)
             {
-                return a.id < b.id;
+                return a.getId() < b.getId();
             }
             );
     }
@@ -2442,8 +2388,8 @@ void StationWindow::sortStations()
             [](const Station &a,
                const Station &b)
             {
-                return a.localisation.toLower()
-                < b.localisation.toLower();
+                return a.getLocalisation().toLower()
+                < b.getLocalisation().toLower();
             }
             );
     }
@@ -2455,8 +2401,8 @@ void StationWindow::sortStations()
             [](const Station &a,
                const Station &b)
             {
-                return a.dateInstallation
-                       < b.dateInstallation;
+                return a.getDateInstallation()
+                       < b.getDateInstallation();
             }
             );
     }
@@ -2468,8 +2414,8 @@ void StationWindow::sortStations()
             [](const Station &a,
                const Station &b)
             {
-                return a.etat.toLower()
-                < b.etat.toLower();
+                return a.getEtat().toLower()
+                < b.getEtat().toLower();
             }
             );
     }
@@ -2490,14 +2436,15 @@ void StationWindow::clearForm()
 
     for (const Station &station : stations)
     {
-        if (station.id >= nextId)
+        if (station.getId() >= nextId)
         {
             nextId =
-                station.id + 1;
+                station.getId() + 1;
         }
     }
 
 
+    idEdit->setEnabled(true);
     idEdit->setValue(
         nextId
         );
@@ -2568,6 +2515,7 @@ void StationWindow::fillFormFromSelectedRow()
             ->text()
             .toInt()
         );
+    idEdit->setEnabled(false);
 
 
     nomEdit->setText(
@@ -2673,16 +2621,16 @@ void StationWindow::exportStations()
     for (const Station &station : stations)
     {
         stream
-            << station.id << ";"
-            << station.nom << ";"
-            << station.localisation << ";"
-            << station.latitude << ";"
-            << station.longitude << ";"
-            << station.dateInstallation
+            << station.getId() << ";"
+            << station.getNom() << ";"
+            << station.getLocalisation() << ";"
+            << station.getLatitude() << ";"
+            << station.getLongitude() << ";"
+            << station.getDateInstallation()
                    .toString("dd/MM/yyyy")
             << ";"
-            << station.type << ";"
-            << station.etat
+            << station.getType() << ";"
+            << station.getEtat()
             << "\n";
     }
 
@@ -2722,11 +2670,11 @@ void StationWindow::updateLocationList()
         QString symbol;
 
 
-        if (station.etat == "Actif")
+        if (station.getEtat() == "Actif")
         {
             symbol = "🟢";
         }
-        else if (station.etat == "Maintenance")
+        else if (station.getEtat() == "Maintenance")
         {
             symbol = "🟠";
         }
@@ -2739,22 +2687,22 @@ void StationWindow::updateLocationList()
         text +=
             symbol
             + "  "
-            + station.nom
+            + station.getNom()
             + " — "
-            + station.localisation
+            + station.getLocalisation()
             + "\n";
 
 
         text +=
             "    "
             + QString::number(
-                station.latitude,
+                station.getLatitude(),
                 'f',
                 4
                 )
             + " / "
             + QString::number(
-                station.longitude,
+                station.getLongitude(),
                 'f',
                 4
                 )
