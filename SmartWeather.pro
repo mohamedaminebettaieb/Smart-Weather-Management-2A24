@@ -1,3 +1,4 @@
+
 QT += widgets printsupport sql
 
 CONFIG += c++17
@@ -16,7 +17,8 @@ SOURCES += \
     bureau.cpp \
     equipement.cpp \
     technicien.cpp \
-    utilisateur.cpp
+    utilisateur.cpp \
+    qrcodegen.cpp
 
 HEADERS += \
     gbureaux.h \
@@ -29,4 +31,5 @@ HEADERS += \
     bureau.h \
     equipement.h \
     technicien.h \
-    utilisateur.h
+    utilisateur.h \
+    qrcodegen.hpp

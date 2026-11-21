@@ -1,0 +1,65 @@
+
+dhiad@MohamedDhia UCRT64 ~
+$ cd /c/Users/dhiad/Documents/Weatherwisetest
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (integration-equipment-crudbureau)
+$ ls
+CMakeLists.txt       cmakelitst.txt  gbureaux.cpp      gutilisateur.ui    technicienne.cpp
+backup-integration/  connection.cpp  gbureaux.h        main.cpp           technicienne.h
+build/               connection.h    gbureaux.ui       newtoken.txt       weatherwisetest.cpp
+bureau.cpp           equipement.cpp  gutilisateur.cpp  stationwindow.cpp  weatherwisetest.h
+bureau.h             equipement.h    gutilisateur.h    stationwuindow.h   weatherwisetest.ui
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (integration-equipment-crudbureau)
+$ git status
+On branch integration-equipment-crudbureau
+Your branch is up to date with 'origin/integration-equipment-crudbureau'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   equipement.cpp
+        modified:   equipement.h
+        modified:   main.cpp
+        modified:   weatherwisetest.cpp
+        modified:   weatherwisetest.h
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        newtoken.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (integration-equipment-crudbureau)
+$ git switch -c integration-equip-bureaux-clear
+Switched to a new branch 'integration-equip-bureaux-clear'
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (integration-equip-bureaux-clear)
+$ git add -A
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (integration-equip-bureaux-clear)
+$ git commit -m "Update equipment and bureau integration"
+[integration-equip-bureaux-clear b481dad] Update equipment and bureau integration
+ 5 files changed, 402 insertions(+), 147 deletions(-)
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (integration-equip-bureaux-clear)
+$ git push -u origin integration-equip-bureaux-clear
+Enumerating objects: 13, done.
+Counting objects: 100% (13/13), done.
+Delta compression using up to 20 threads
+Compressing objects: 100% (7/7), done.
+Writing objects: 100% (7/7), 3.07 KiB | 349.00 KiB/s, done.
+Total 7 (delta 6), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (6/6), completed with 6 local objects.
+remote: This repository moved. Please use the new location:
+remote:   https://github.com/mohamedaminebettaieb/Smart-Weather-Management-2A24.git
+remote:
+remote: Create a pull request for 'integration-equip-bureaux-clear' on GitHub by visiting:
+remote:      https://github.com/mohamedaminebettaieb/Smart-Weather-Management-2A24/pull/new/integration-equip-bureaux-clear
+remote:
+To https://github.com/AmineBett/Smart-Weather-Management-2A24.git
+ * [new branch]      integration-equip-bureaux-clear -> integration-equip-bureaux-clear
+branch 'integration-equip-bureaux-clear' set up to track 'origin/integration-equip-bureaux-clear'.
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (integration-equip-bureaux-clear)
+$
