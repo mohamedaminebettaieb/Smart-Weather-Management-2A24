@@ -28,14 +28,11 @@ class QVBoxLayout;
 /*  Structure de données                                              */
 /* ------------------------------------------------------------------ */
 struct Bureau {
-    QString id;
-    QString nom;
-    QString prenom;
+    int     id;
     QString localisation;
     QDate   dateOuverture;
     bool    actif;
-
-    QString responsable() const { return prenom + " " + nom; }
+    QString utilisateur;      // "Administrateur" ou "Technicien"
 };
 
 /* ------------------------------------------------------------------ */
@@ -263,15 +260,17 @@ private:
 
     // Logique
     void detectCountry();
-    void loadSampleData();
+    void loadFromOracle();   // charge les bureaux enregistrés dans Oracle
     void refreshTable();
     void updateStats();
     bool readForm(Bureau &b);
-    QString nextId() const;
+    void editById(int id);     // crayon : charge le bureau dans le formulaire
+    void deleteById(int id);   // poubelle : supprime le bureau
+    int nextId() const;
 
     QVector<Bureau> m_bureaux;
-    QString m_editId;            // ID du bureau sélectionné ("" = aucun)
-    int m_sortMode;              // -1 : ordre d'ajout, 0 : responsable, 1 : date
+    int m_editId;                // ID du bureau sélectionné (0 = aucun)
+    int m_sortMode;              // -1 : ordre d'ajout, 0 : date d'ouverture, 1 : localisation
     CountryGeo m_geo;
     QString m_geoNote;
 
@@ -287,11 +286,10 @@ private:
     QLabel       *m_timeLabel;
 
     QLineEdit    *m_id;
-    QLineEdit    *m_nom;
-    QLineEdit    *m_prenom;
     QComboBox    *m_loc;
     QDateEdit    *m_date;
     QComboBox    *m_statut;
+    QComboBox    *m_user;       // statut de l'utilisateur : Administrateur / Technicien
 };
 
 #endif // GBUREAUX_H

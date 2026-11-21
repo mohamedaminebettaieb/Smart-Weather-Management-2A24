@@ -1,4 +1,7 @@
 #include "Connection.h"
+#include <QHash>
+#include <QSet>
+#include <QSqlQuery>
 
 // Ctor
 // Initialise l'attribut `db` avec le driver ODBC.
@@ -38,5 +41,27 @@ bool Connection::createConnection() {
 
     qDebug() << "Échec de la connexion :" << db.lastError().text();
     return false;
+}
+
+int Connection::longueurColonne(const QString &table, const QString &colonne)
+{
+    static QHash<QString, int> cache;
+    static QSet<QString> tablesChargees;
+    const QString nomTable = table.toUpper();
+
+    if (!tablesChargees.contains(nomTable)) {
+        QSqlQuery query;
+        query.prepare("SELECT COLUMN_NAME, CHAR_LENGTH FROM USER_TAB_COLUMNS WHERE TABLE_NAME = :table");
+        query.bindValue(":table", nomTable);
+        if (query.exec()) {
+            while (query.next())
+                cache.insert(nomTable + "." + query.value(0).toString().toUpper(), query.value(1).toInt());
+            tablesChargees.insert(nomTable);
+        } else {
+            qDebug() << "Connection::longueurColonne:" << query.lastError().text();
+        }
+    }
+
+    return cache.value(nomTable + "." + colonne.toUpper(), 0);
 }
 

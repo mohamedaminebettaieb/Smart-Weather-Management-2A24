@@ -1,6 +1,6 @@
 QT += widgets printsupport sql
 
-CONFIG += c++11
+CONFIG += c++17
 TEMPLATE = app
 TARGET = SmartWeather
 
@@ -12,7 +12,11 @@ SOURCES += \
     stationwindow.cpp \
     technicienne.cpp \
     weatherwisetest.cpp \
-    connection.cpp
+    connection.cpp \
+    bureau.cpp \
+    equipement.cpp \
+    technicien.cpp \
+    utilisateur.cpp
 
 HEADERS += \
     gbureaux.h \
@@ -21,4 +25,8 @@ HEADERS += \
     stationwindow.h \
     technicienne.h \
     weatherwisetest.h \
-    connection.h
+    connection.h \
+    bureau.h \
+    equipement.h \
+    technicien.h \
+    utilisateur.h

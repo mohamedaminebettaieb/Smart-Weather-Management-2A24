@@ -16,6 +16,7 @@
 #include <QDateTime>
 #include <QWidget>
 #include <QPainter>
+#include "utilisateur.h"
 
 // ============================================================
 // GRAPHIQUE DONUT (statistiques par rôle)
@@ -145,17 +146,6 @@ private slots:
 
 private:
 
-    struct Utilisateur
-    {
-        int id;
-        QString nom;
-        QString prenom;
-        QString tel;
-        QString role;
-        QString mdp;
-        QString email;
-    };
-
     QList<Utilisateur> utilisateurs;
     QStringList rolesDisponibles;
     QStringList activites;
@@ -234,7 +224,6 @@ private:
     void construireInterface();
     void construireLogin();
     void remplirTableau();
-    void ajouterDonneesTest();
     void mettreAJourStatistiques();
     void enregistrerAction(const QString &action);
 

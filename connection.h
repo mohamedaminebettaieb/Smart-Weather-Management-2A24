@@ -4,6 +4,7 @@
 #include <QSqlDatabase>
 #include <QDebug>
 #include <QSqlError>
+#include <QString>
 
 /* Classe Connection
  * Implémentation du pattern Singleton pour gérer une connexion unique à la base de données.
@@ -21,6 +22,7 @@ public:
 
     static Connection& createInstance(); // Méthode qui retourne une référence unique
     bool createConnection();  // Méthode utilisée pour établir la connexion à la base
+    static int longueurColonne(const QString &table, const QString &colonne);
 
 private:
 

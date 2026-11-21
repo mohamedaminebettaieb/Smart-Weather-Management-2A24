@@ -1645,7 +1645,7 @@ void StationWindow::loadStationsFromDatabase()
 
     QSqlQuery query(QSqlDatabase::database());
     if (!query.exec(
-            "SELECT ID_STATION, NOM, LOCALISATION, LATITUDE, LONGITUDE, "
+            "SELECT ID_STATION, NOM_STATION, LOCALISATION_STATION, LATITUDE, LONGITUDE, "
             "DATE_INSTALLATION_STATION, TYPE_STATION, STATUT_STATION "
             "FROM STATIONS ORDER BY ID_STATION"))
     {
@@ -2055,11 +2055,24 @@ void StationWindow::addStation()
 
     station.setEtat(etatCombo->currentText());
 
+    QSqlQuery bureauQuery(QSqlDatabase::database());
+    if (!bureauQuery.exec("SELECT MIN(ID_BUREAU) FROM BUREAUX")
+        || !bureauQuery.next() || bureauQuery.value(0).isNull())
+    {
+        QMessageBox::critical(
+            this,
+            "Bureau requis",
+            "Créez d'abord un bureau. Chaque station doit être rattachée à un bureau dans la base."
+            );
+        return;
+    }
+    const QVariant bureauId = bureauQuery.value(0);
+
     QSqlQuery query(QSqlDatabase::database());
     if (!query.prepare(
-        "INSERT INTO STATIONS (ID_STATION, NOM, LOCALISATION, LATITUDE, LONGITUDE, "
-        "DATE_INSTALLATION_STATION, TYPE_STATION, STATUT_STATION) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO STATIONS (ID_STATION, NOM_STATION, LOCALISATION_STATION, LATITUDE, LONGITUDE, "
+        "DATE_INSTALLATION_STATION, TYPE_STATION, STATUT_STATION, ID_BUREAU) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
         ))
     {
         QMessageBox::critical(
@@ -2073,13 +2086,13 @@ void StationWindow::addStation()
     query.addBindValue(station.getId());
     query.addBindValue(station.getNom());
     query.addBindValue(station.getLocalisation());
-    // The Oracle columns LATITUDE and LONGITUDE are VARCHAR2(20 BYTE).
-    // Store a short, locale-independent decimal string instead of a double.
-    query.addBindValue(QString::number(station.getLatitude(), 'f', 4));
-    query.addBindValue(QString::number(station.getLongitude(), 'f', 4));
+    // LATITUDE and LONGITUDE are NUMBER columns in the supplied schema.
+    query.addBindValue(station.getLatitude());
+    query.addBindValue(station.getLongitude());
     query.addBindValue(station.getDateInstallation());
     query.addBindValue(station.getType());
     query.addBindValue(station.getEtat());
+    query.addBindValue(bureauId);
 
     if (!query.exec())
     {
@@ -2153,7 +2166,7 @@ void StationWindow::modifyStation()
 
     QSqlQuery query(QSqlDatabase::database());
     if (!query.prepare(
-        "UPDATE STATIONS SET NOM = ?, LOCALISATION = ?, LATITUDE = ?, "
+        "UPDATE STATIONS SET NOM_STATION = ?, LOCALISATION_STATION = ?, LATITUDE = ?, "
         "LONGITUDE = ?, DATE_INSTALLATION_STATION = ?, TYPE_STATION = ?, "
         "STATUT_STATION = ? WHERE ID_STATION = ?"
         ))
@@ -2168,9 +2181,8 @@ void StationWindow::modifyStation()
     }
     query.addBindValue(updatedStation.getNom());
     query.addBindValue(updatedStation.getLocalisation());
-    // LATITUDE and LONGITUDE are VARCHAR2 columns in STATIONS.
-    query.addBindValue(QString::number(updatedStation.getLatitude(), 'f', 4));
-    query.addBindValue(QString::number(updatedStation.getLongitude(), 'f', 4));
+    query.addBindValue(updatedStation.getLatitude());
+    query.addBindValue(updatedStation.getLongitude());
     query.addBindValue(updatedStation.getDateInstallation());
     query.addBindValue(updatedStation.getType());
     query.addBindValue(updatedStation.getEtat());
