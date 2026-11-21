@@ -121,6 +121,10 @@ public:
     explicit Gutilisateur(QWidget *parent = 0);
     ~Gutilisateur();
 
+signals:
+    void loginSucceeded();   // émis quand la connexion réussit
+    void loggedOut();        // émis quand l'utilisateur se déconnecte
+
 private slots:
     // connexion
     void seConnecter();

@@ -21,6 +21,12 @@
 #endif
 #include <algorithm>
 
+// Compte de démonstration (sans base de données) : 1 = actif, 0 = désactivé.
+// Mettre à 0 quand le vrai système de rôles sera prêt.
+#define LOGIN_DEMO_ACTIF 1
+#define LOGIN_DEMO_EMAIL "ahmed@gmail.com"
+#define LOGIN_DEMO_MDP   "1234"
+
 // ============================================================
 // CONSTRUCTEUR / DESTRUCTEUR
 // ============================================================
@@ -760,6 +766,28 @@ void Gutilisateur::seConnecter()
         return;
     }
 
+#if LOGIN_DEMO_ACTIF
+    // Compte de démonstration : fonctionne même sans rôle dans la base
+    if (email.compare(QString(LOGIN_DEMO_EMAIL), Qt::CaseInsensitive) == 0
+        && mdp == QString(LOGIN_DEMO_MDP))
+    {
+        utilisateurConnecte = -2;   // aucun vrai utilisateur n'a cet ID
+        loginEchecs = 0;
+
+        labelConnecte->setText("👤  Administrateur (démo)");
+
+        enregistrerAction("Connexion : compte démo");
+
+        loginEmail->clear();
+        loginMdp->clear();
+        loginErreur->clear();
+
+        pile->setCurrentIndex(1);
+        emit loginSucceeded();
+        return;
+    }
+#endif
+
     for (int i = 0; i < utilisateurs.size(); i++)
     {
         const Utilisateur &u = utilisateurs.at(i);
@@ -781,6 +809,9 @@ void Gutilisateur::seConnecter()
             loginErreur->clear();
 
             pile->setCurrentIndex(1);
+
+            // Prévient la fenêtre principale : le menu peut être débloqué
+            emit loginSucceeded();
             return;
         }
     }
@@ -818,6 +849,9 @@ void Gutilisateur::deconnecter()
     retourConnexion();
 
     pile->setCurrentIndex(0);
+
+    // Prévient la fenêtre principale : le menu doit être verrouillé
+    emit loggedOut();
 }
 
 void Gutilisateur::ouvrirRecuperation()
