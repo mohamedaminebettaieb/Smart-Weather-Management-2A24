@@ -1,4 +1,3 @@
-
 #include "weatherwisetest.h"
 #include "equipement.h"
 #include "qrcodegen.hpp"
@@ -22,7 +21,6 @@
 #include <QPageSize>
 #include <QPdfWriter>
 #include <QPushButton>
-#include <QScrollArea>
 #include <QTableWidget>
 #include <QTableWidgetItem>
 #include <QTextDocument>
@@ -178,6 +176,9 @@ WeatherWiseTest::WeatherWiseTest(QWidget *parent)
 
     setStyleSheet(styleSheet());
 
+    // Taille initiale de la fenêtre
+    resize(1500, 900);
+
     QWidget *central = new QWidget;
     QHBoxLayout *root = new QHBoxLayout(central);
 
@@ -194,14 +195,14 @@ WeatherWiseTest::WeatherWiseTest(QWidget *parent)
 
     rv->addWidget(buildHeader());
 
-    // Contenu principal
+    // Contenu principal sans zone de défilement
     QWidget *content = new QWidget;
     content->setObjectName("content");
 
     QGridLayout *g = new QGridLayout(content);
 
-    g->setContentsMargins(20, 12, 20, 12);
-    g->setSpacing(12);
+    g->setContentsMargins(16, 8, 16, 8);
+    g->setSpacing(8);
 
     // Formulaire sur toute la largeur
     g->addWidget(buildFormCard(), 0, 0, 1, 2);
@@ -229,14 +230,8 @@ WeatherWiseTest::WeatherWiseTest(QWidget *parent)
     g->setRowStretch(2, 3);
     g->setRowStretch(3, 2);
 
-    // Zone défilante pour éviter que les sections soient coupées
-    QScrollArea *scroll = new QScrollArea;
-
-    scroll->setWidgetResizable(true);
-    scroll->setFrameShape(QFrame::NoFrame);
-    scroll->setWidget(content);
-
-    rv->addWidget(scroll, 1);
+    // Affichage direct : aucun scroll vertical
+    rv->addWidget(content, 1);
 
     root->addWidget(right, 1);
 
@@ -570,8 +565,9 @@ QWidget *WeatherWiseTest::buildFormCard()
 
     QVBoxLayout *v = new QVBoxLayout(card);
 
-    v->setContentsMargins(20, 10, 20, 12);
-    v->setSpacing(8);
+    // Formulaire plus compact
+    v->setContentsMargins(16, 7, 16, 8);
+    v->setSpacing(5);
 
     v->addWidget(
         makeCardTitle(
@@ -700,7 +696,7 @@ QWidget *WeatherWiseTest::buildFormCard()
     QGridLayout *g = new QGridLayout;
 
     g->setHorizontalSpacing(14);
-    g->setVerticalSpacing(8);
+    g->setVerticalSpacing(5);
 
     g->setColumnStretch(1, 1);
     g->setColumnStretch(3, 1);
@@ -731,7 +727,7 @@ QWidget *WeatherWiseTest::buildToolbar()
 
     QHBoxLayout *l = new QHBoxLayout(card);
 
-    l->setContentsMargins(14, 8, 14, 8);
+    l->setContentsMargins(14, 6, 14, 6);
     l->setSpacing(8);
 
     QPushButton *bAdd = new QPushButton(
@@ -839,8 +835,8 @@ QWidget *WeatherWiseTest::buildTableCard()
 
     QVBoxLayout *v = new QVBoxLayout(card);
 
-    v->setContentsMargins(16, 14, 16, 14);
-    v->setSpacing(8);
+    v->setContentsMargins(12, 8, 12, 8);
+    v->setSpacing(5);
 
     QHBoxLayout *top = new QHBoxLayout;
 
@@ -879,7 +875,7 @@ QWidget *WeatherWiseTest::buildTableCard()
 
     m_table->setHorizontalHeaderLabels(headers);
 
-    m_table->verticalHeader()->setDefaultSectionSize(34);
+    m_table->verticalHeader()->setDefaultSectionSize(28);
 
     m_table->horizontalHeader()->setSectionResizeMode(
         QHeaderView::Stretch
@@ -898,7 +894,9 @@ QWidget *WeatherWiseTest::buildTableCard()
         );
 
     m_table->setFocusPolicy(Qt::NoFocus);
-    m_table->setMinimumHeight(280);
+
+    // Tableau plus compact
+    m_table->setMinimumHeight(190);
 
     v->addWidget(m_table, 1);
 
@@ -922,8 +920,8 @@ QWidget *WeatherWiseTest::buildMaintenanceCard()
 
     QVBoxLayout *v = new QVBoxLayout(card);
 
-    v->setContentsMargins(16, 12, 16, 12);
-    v->setSpacing(8);
+    v->setContentsMargins(14, 8, 14, 8);
+    v->setSpacing(5);
 
     v->addWidget(
         makeCardTitle(
@@ -952,6 +950,7 @@ QWidget *WeatherWiseTest::buildMaintenanceCard()
         );
 
     bCalculate->setObjectName("primary");
+    bCalculate->setMaximumHeight(32);
 
     v->addWidget(bCalculate);
 
@@ -984,7 +983,7 @@ QWidget *WeatherWiseTest::buildMaintenanceCard()
         QHeaderView::Stretch
         );
 
-    m_maintenanceTable->verticalHeader()->setDefaultSectionSize(32);
+    m_maintenanceTable->verticalHeader()->setDefaultSectionSize(25);
 
     m_maintenanceTable->setEditTriggers(
         QAbstractItemView::NoEditTriggers
@@ -994,7 +993,9 @@ QWidget *WeatherWiseTest::buildMaintenanceCard()
         QAbstractItemView::SelectRows
         );
 
-    m_maintenanceTable->setMinimumHeight(150);
+    // Tableau de prédiction compact
+    m_maintenanceTable->setMinimumHeight(65);
+    m_maintenanceTable->setMaximumHeight(85);
 
     v->addWidget(m_maintenanceTable);
 
@@ -1004,6 +1005,8 @@ QWidget *WeatherWiseTest::buildMaintenanceCard()
         this,
         SLOT(onCalculateMaintenance())
         );
+
+    card->setMinimumHeight(190);
 
     return card;
 }
@@ -1018,8 +1021,8 @@ QWidget *WeatherWiseTest::buildQrCard()
 
     QVBoxLayout *v = new QVBoxLayout(card);
 
-    v->setContentsMargins(16, 12, 16, 12);
-    v->setSpacing(8);
+    v->setContentsMargins(12, 8, 12, 8);
+    v->setSpacing(5);
 
     v->addWidget(
         makeCardTitle(
@@ -1030,7 +1033,7 @@ QWidget *WeatherWiseTest::buildQrCard()
         );
 
     QHBoxLayout *body = new QHBoxLayout;
-    body->setSpacing(12);
+    body->setSpacing(8);
 
     // Informations à gauche
     QVBoxLayout *left = new QVBoxLayout;
@@ -1048,10 +1051,10 @@ QWidget *WeatherWiseTest::buildQrCard()
     left->addWidget(m_qrInfo);
     left->addStretch();
 
-    // Aperçu QR agrandi
+    // Aperçu QR plus petit
     m_qrPreview = new QLabel;
 
-    m_qrPreview->setFixedSize(320, 320);
+    m_qrPreview->setFixedSize(190, 190);
     m_qrPreview->setAlignment(Qt::AlignCenter);
 
     m_qrPreview->setStyleSheet(
@@ -1067,7 +1070,8 @@ QWidget *WeatherWiseTest::buildQrCard()
 
     v->addLayout(body, 1);
 
-    card->setMinimumHeight(370);
+    card->setMinimumHeight(215);
+    card->setMaximumHeight(225);
 
     return card;
 }
@@ -1339,17 +1343,17 @@ void WeatherWiseTest::onGenerateQrCode()
             }
         }
 
-        // Afficher le QR dans le grand aperçu
+        // Afficher le QR dans un aperçu plus petit
         m_qrPreview->setPixmap(
             QPixmap::fromImage(m_qrImage).scaled(
-                300,
-                300,
+                180,
+                180,
                 Qt::KeepAspectRatio,
                 Qt::FastTransformation
                 )
             );
 
-        // Informations affichées sous le QR
+        // Informations affichées à côté du QR
         m_qrInfo->setText(
             QString::fromUtf8(
                 "Code QR généré automatiquement.\n\n"
@@ -1502,8 +1506,9 @@ QWidget *WeatherWiseTest::buildStatsCard()
 
     QVBoxLayout *v = new QVBoxLayout(card);
 
-    v->setContentsMargins(16, 10, 16, 10);
-    v->setSpacing(6);
+    // Carte de statistiques plus compacte
+    v->setContentsMargins(12, 7, 12, 7);
+    v->setSpacing(3);
 
     v->addWidget(
         makeCardTitle(
@@ -1513,7 +1518,9 @@ QWidget *WeatherWiseTest::buildStatsCard()
             )
         );
 
+    // Graphique plus petit
     m_donut = new EquipementDonutChart;
+    m_donut->setFixedSize(100, 100);
 
     QLabel *dotA = new QLabel(QString::fromUtf8("●"));
     dotA->setStyleSheet(
@@ -1536,8 +1543,8 @@ QWidget *WeatherWiseTest::buildStatsCard()
 
     QGridLayout *lg = new QGridLayout;
 
-    lg->setHorizontalSpacing(10);
-    lg->setVerticalSpacing(8);
+    lg->setHorizontalSpacing(6);
+    lg->setVerticalSpacing(4);
 
     lg->addWidget(dotA, 0, 0);
     lg->addWidget(new QLabel("Actifs"), 0, 1);
@@ -1553,10 +1560,14 @@ QWidget *WeatherWiseTest::buildStatsCard()
 
     QHBoxLayout *body = new QHBoxLayout;
 
-    body->addWidget(m_donut, 1);
+    body->setSpacing(8);
+    body->addWidget(m_donut);
     body->addLayout(lg);
 
-    v->addLayout(body, 1);
+    v->addLayout(body);
+
+    card->setMinimumHeight(125);
+    card->setMaximumHeight(140);
 
     return card;
 }
@@ -2314,8 +2325,6 @@ QString WeatherWiseTest::styleSheet()
     return QString::fromUtf8(
         R"QSS(
 QMainWindow, #content { background: #f4f7fb; }
-QScrollArea { background: #f4f7fb; border: none; }
-QScrollArea > QWidget > QWidget { background: #f4f7fb; }
 
 #sidebar { background: #17407e; }
 #sunIcon { color: #ffc61a; font-size: 46px; background: transparent; }
@@ -2387,7 +2396,7 @@ QHeaderView::section {
     border: none;
     border-right: 1px solid #e3e8f0;
     border-bottom: 1px solid #e3e8f0;
-    padding: 10px 6px;
+    padding: 8px 6px;
     font-weight: 700;
 }
 QTableCornerButton::section { background: #f1f5fb; border: none; }

@@ -63,3 +63,235 @@ branch 'integration-equip-bureaux-clear' set up to track 'origin/integration-equ
 
 dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (integration-equip-bureaux-clear)
 $
+////////////////////////////////////////////////////////////////
+
+dhiad@MohamedDhia UCRT64 ~
+$ cd /c/Users/dhiad/Documents/Weatherwisetest
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (integration-equip-bureaux-clear)
+$ git fetch origin
+remote: Enumerating objects: 58, done.
+remote: Counting objects: 100% (58/58), done.
+remote: Compressing objects: 100% (42/42), done.
+remote: Total 58 (delta 28), reused 39 (delta 16), pack-reused 0 (from 0)
+Unpacking objects: 100% (58/58), 54.17 KiB | 137.00 KiB/s, done.
+From https://github.com/AmineBett/Smart-Weather-Management-2A24
+ * [new branch]      CRUD-final            -> origin/CRUD-final
+ * [new branch]      integration-CRUD-equipement-bureaux-tech -> origin/integration-CRUD-equipement-bureaux-tech
+   695a190..2d6a83d  stations-CRUD-integre -> origin/stations-CRUD-integre
+ * [new branch]      techniciens-CRUDF     -> origin/techniciens-CRUDF
+   801043a..8b7543f  utilisateur-CRUD      -> origin/utilisateur-CRUD
+ * [new branch]      utilisateur-CRUD-integre -> origin/utilisateur-CRUD-integre
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (integration-equip-bureaux-clear)
+$ git checkout CRUD-final
+branch 'CRUD-final' set up to track 'origin/CRUD-final'.
+Switched to a new branch 'CRUD-final'
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-final)
+$ git checkout -b CRUD-final origin/CRUD-final
+fatal: a branch named 'CRUD-final' already exists
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-final)
+$ git pull
+Already up to date.
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-final)
+$ git branch
+* CRUD-final
+  equipement
+  equipment-crud-FINAL
+  integration-equip-bureaux-clear
+  integration-equipment-crudbureau
+  integration-techinciens-stations-bureaux-utilisateur-equipment-FINAL
+  integration-techniciens-stations-bureaux-equipement
+  integration-techniciens-stations-bureaux-utilisateur-equipments
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-final)
+$ git branch
+ls
+* CRUD-final
+  equipement
+  equipment-crud-FINAL
+  integration-equip-bureaux-clear
+  integration-equipment-crudbureau
+  integration-techinciens-stations-bureaux-utilisateur-equipment-FINAL
+  integration-techniciens-stations-bureaux-equipement
+  integration-techniciens-stations-bureaux-utilisateur-equipments
+SmartWeather.pro     connection.h      gutilisateur.h  smartweatherwindow.cpp  technicienne.cpp
+backup-integration/  equipement.cpp    main.cpp        smartweatherwindow.h    technicienne.h
+build/               equipement.h      mainwindow.cpp  stationwindow.cpp       utilisateur.cpp
+bureau.cpp           gbureaux.cpp      mainwindow.h    stationwindow.h         utilisateur.h
+bureau.h             gbureaux.h        mainwindow.ui   technicien.cpp          weatherwisetest.cpp
+connection.cpp       gutilisateur.cpp  push.txt        technicien.h            weatherwisetest.h
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-final)
+$ git ls-files | grep -i -E "CMakeLists|\.pro$"
+SmartWeather.pro
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-final)
+$ ls
+SmartWeather.pro     connection.h      gutilisateur.h  smartweatherwindow.cpp  technicienne.cpp
+backup-integration/  equipement.cpp    main.cpp        smartweatherwindow.h    technicienne.h
+build/               equipement.h      mainwindow.cpp  stationwindow.cpp       utilisateur.cpp
+bureau.cpp           gbureaux.cpp      mainwindow.h    stationwindow.h         utilisateur.h
+bureau.h             gbureaux.h        mainwindow.ui   technicien.cpp          weatherwisetest.cpp
+connection.cpp       gutilisateur.cpp  push.txt        technicien.h            weatherwisetest.h
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-final)
+$ git status
+On branch CRUD-final
+Your branch is up to date with 'origin/CRUD-final'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   connection.cpp
+        modified:   gutilisateur.cpp
+        modified:   gutilisateur.h
+        modified:   main.cpp
+        modified:   smartweatherwindow.cpp
+        modified:   smartweatherwindow.h
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        backup-integration/
+        push.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-final)
+$ git checkout -b CRUD-INTEGRE-FINAL-interface-fixe
+Switched to a new branch 'CRUD-INTEGRE-FINAL-interface-fixe'
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-INTEGRE-FINAL-interface-fixe)
+$ git add main.cpp smartweatherwindow.h smartweatherwindow.cpp gutilisateur.h gutilisateur.cpp
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-INTEGRE-FINAL-interface-fixe)
+$ git add SmartWeather.pro
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-INTEGRE-FINAL-interface-fixe)
+$ git status
+On branch CRUD-INTEGRE-FINAL-interface-fixe
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+        modified:   gutilisateur.cpp
+        modified:   gutilisateur.h
+        modified:   main.cpp
+        modified:   smartweatherwindow.cpp
+        modified:   smartweatherwindow.h
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   connection.cpp
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        backup-integration/
+        push.txt
+
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-INTEGRE-FINAL-interface-fixe)
+$ git commit -m "Interface fixe: login en premier, menu verrouille jusqu'a la connexion"
+[CRUD-INTEGRE-FINAL-interface-fixe b22fc07] Interface fixe: login en premier, menu verrouille jusqu'a la connexion
+ 5 files changed, 131 insertions(+), 226 deletions(-)
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-INTEGRE-FINAL-interface-fixe)
+$ git push -u origin CRUD-INTEGRE-FINAL-interface-fixe
+Enumerating objects: 13, done.
+Counting objects: 100% (13/13), done.
+Delta compression using up to 20 threads
+Compressing objects: 100% (7/7), done.
+Writing objects: 100% (7/7), 2.20 KiB | 751.00 KiB/s, done.
+Total 7 (delta 6), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (6/6), completed with 6 local objects.
+remote: This repository moved. Please use the new location:
+remote:   https://github.com/mohamedaminebettaieb/Smart-Weather-Management-2A24.git
+remote:
+remote: Create a pull request for 'CRUD-INTEGRE-FINAL-interface-fixe' on GitHub by visiting:
+remote:      https://github.com/mohamedaminebettaieb/Smart-Weather-Management-2A24/pull/new/CRUD-INTEGRE-FINAL-interface-fixe
+remote:
+To https://github.com/AmineBett/Smart-Weather-Management-2A24.git
+ * [new branch]      CRUD-INTEGRE-FINAL-interface-fixe -> CRUD-INTEGRE-FINAL-interface-fixe
+branch 'CRUD-INTEGRE-FINAL-interface-fixe' set up to track 'origin/CRUD-INTEGRE-FINAL-interface-fixe'.
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-INTEGRE-FINAL-interface-fixe)
+$ git switch -c CRUD-FINAL-EQUIPMENT-METIERS
+Switched to a new branch 'CRUD-FINAL-EQUIPMENT-METIERS'
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-FINAL-EQUIPMENT-METIERS)
+$ git add .
+warning: in the working copy of 'qrcodegen.cpp', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'qrcodegen.hpp', LF will be replaced by CRLF the next time Git touches it
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-FINAL-EQUIPMENT-METIERS)
+$ git commit -m "Final equipment CRUD and metiers integration"
+[CRUD-FINAL-EQUIPMENT-METIERS bd459e7] Final equipment CRUD and metiers integration
+ 21 files changed, 12037 insertions(+), 1000 deletions(-)
+ create mode 100644 backup-integration/CMakeLists.txt
+ create mode 100644 backup-integration/gbureaux.cpp
+ create mode 100644 backup-integration/gbureaux.h
+ create mode 100644 backup-integration/gutilisateur.cpp
+ create mode 100644 backup-integration/gutilisateur.h
+ create mode 100644 backup-integration/main.cpp
+ create mode 100644 backup-integration/stationwindow.cpp
+ create mode 100644 backup-integration/stationwuindow.h
+ create mode 100644 backup-integration/technicienne.cpp
+ create mode 100644 backup-integration/technicienne.h
+ create mode 100644 backup-integration/weatherwisetest.cpp
+ create mode 100644 backup-integration/weatherwisetest.h
+ create mode 100644 push.txt
+ create mode 100644 qrcodegen.cpp
+ create mode 100644 qrcodegen.hpp
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-FINAL-EQUIPMENT-METIERS)
+$ git push -u origin CRUD-FINAL-EQUIPMENT-METIERS
+Enumerating objects: 29, done.
+Counting objects: 100% (29/29), done.
+Delta compression using up to 20 threads
+Compressing objects: 100% (24/24), done.
+Writing objects: 100% (24/24), 88.83 KiB | 3.86 MiB/s, done.
+Total 24 (delta 7), reused 9 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (7/7), completed with 5 local objects.
+remote: This repository moved. Please use the new location:
+remote:   https://github.com/mohamedaminebettaieb/Smart-Weather-Management-2A24.git
+remote:
+remote: Create a pull request for 'CRUD-FINAL-EQUIPMENT-METIERS' on GitHub by visiting:
+remote:      https://github.com/mohamedaminebettaieb/Smart-Weather-Management-2A24/pull/new/CRUD-FINAL-EQUIPMENT-METIERS
+remote:
+To https://github.com/AmineBett/Smart-Weather-Management-2A24.git
+ * [new branch]      CRUD-FINAL-EQUIPMENT-METIERS -> CRUD-FINAL-EQUIPMENT-METIERS
+branch 'CRUD-FINAL-EQUIPMENT-METIERS' set up to track 'origin/CRUD-FINAL-EQUIPMENT-METIERS'.
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-FINAL-EQUIPMENT-METIERS)
+$ git branch
+* CRUD-FINAL-EQUIPMENT-METIERS
+  CRUD-INTEGRE-FINAL-interface-fixe
+  CRUD-final
+  equipement
+  equipment-crud-FINAL
+  integration-equip-bureaux-clear
+  integration-equipment-crudbureau
+  integration-techinciens-stations-bureaux-utilisateur-equipment-FINAL
+  integration-techniciens-stations-bureaux-equipement
+  integration-techniciens-stations-bureaux-utilisateur-equipments
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-FINAL-EQUIPMENT-METIERS)
+$ git switch -c CRUD-FINAL-EQUIPMENT-METIERS
+fatal: a branch named 'CRUD-FINAL-EQUIPMENT-METIERS' already exists
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-FINAL-EQUIPMENT-METIERS)
+$ git branch
+* CRUD-FINAL-EQUIPMENT-METIERS
+  CRUD-INTEGRE-FINAL-interface-fixe
+  CRUD-final
+  equipement
+  equipment-crud-FINAL
+  integration-equip-bureaux-clear
+  integration-equipment-crudbureau
+  integration-techinciens-stations-bureaux-utilisateur-equipment-FINAL
+  integration-techniciens-stations-bureaux-equipement
+  integration-techniciens-stations-bureaux-utilisateur-equipments
+
+dhiad@MohamedDhia UCRT64 ~/Documents/Weatherwisetest (CRUD-FINAL-EQUIPMENT-METIERS)
